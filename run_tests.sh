@@ -20,6 +20,8 @@
 #
 #       ./run_tests.sh
 
+#Tegan to do: modify the script so that ymin and ymax are treated similar to temperature
+# also come up with a test for the scattering error bars 
 BLACKLIGHT_BIN="./bin/blacklight"
 INPUT_DIR="./input/"
 LOG_DIR="./test_logs"

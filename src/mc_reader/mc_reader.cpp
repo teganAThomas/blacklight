@@ -430,7 +430,9 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
       for(int j=0;j<source_term.n2;j++){
     for(int i=0;i<source_term.n1;i++){
 
-              if(std::isnan(scattering(l,b,k,j,i))){
+              if(std::isnan(scattering(l,b,k,j,i))||scattering(l,b,k,j,i)<=0.0){
+                //happens a lot now!
+                //std::printf("Scattering value Nan or negative! frequency index: %d, block index: %d, k index: %d, j index: %d, i index: %d, scattering value: %.15f \n",l,b,k,j,i,scattering(l,b,k,j,i));
                 source_term(l,b,k,j,i) = 0.0;
                 scattering_error(l,b,k,j,i) = 0.0;
               }else{
@@ -574,7 +576,7 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
               source_term(l,b,k,j,i) = 0.0;
               scattering_error(l,b,k,j,i) = 0.0;
             }else{*/
-            if(!std::isnan(source_term(l,b,k,j,i))){
+            if(!std::isnan(source_term(l,b,k,j,i)) && source_term(l,b,k,j,i)>0.0){
               source_term(l,b,k,j,i) = (1-x)*scattering(l,b,k,j,i)+ (x-3*theta_e)*scattering_prime(l,b,k,j,i)+theta_e*scattering_prime_prime(l,b,k,j,i);
               /*double sigma_prime = scattering(l+source_term.n5+1,b,k,j,i)/std::pow((ln_freq_grid(l+1)-ln_freq_grid(l-1)),2.) + scattering(l+source_term.n5-1,b,k,j,i)/std::pow((ln_freq_grid(l+1)-ln_freq_grid(l-1)),2.);
               double sigma_prime_minus = scattering(l+source_term.n5,b,k,j,i)/std::pow((ln_freq_grid(l)-ln_freq_grid(l-2)),2.) + scattering(l+source_term.n5-2,b,k,j,i)/std::pow((ln_freq_grid(l)-ln_freq_grid(l-2)),2.);
@@ -597,7 +599,9 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
                 }
               }
             }else{
-              source_term(l,b,k,j,i) = std::nanf("");
+              //happens a lot!
+              //std::printf("Scattering value Nan or negative!");
+              source_term(l,b,k,j,i) = 0.0;
               scattering_error(l,b,k,j,i) = 0.0;
             }
               /*if(source_term(l,b,k,j,i)<scattering_error(l,b,k,j,i)){

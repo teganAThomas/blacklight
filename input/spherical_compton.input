@@ -4,7 +4,7 @@ num_threads = 12           # number of threads to use in parallel
 
 # Output parameters
 output_format = npz                            # format of output file (npz, npy, raw)
-output_file   = /PellaShared/kcu8rf/blacklight/spherical_isothermal/sks_comp/sks_ring_comp_lowphot.npz  # file to be (over)written with output data
+output_file   = /PellaShared/kcu8rf/blacklight/spherical_isothermal/sks_thoms/shane_sks_ring.npz  # file to be (over)written with output data
 output_camera = false                          # flag for saving camera details
 
 # Checkpoint parameters
@@ -17,7 +17,7 @@ checkpoint_sample_file   = data/sample.dat
 
 # Simulation parameters
 simulation_format       = athena           # format of GRMHD data
-simulation_file         = /PellaShared/kcu8rf/sks_ring_comp_lowphot/isothgr.out2.00000.athdf # file containing data dump
+simulation_file         = /PellaShared/kcu8rf/gr_shell/isothgr.out2.00000.athdf # file containing data dump
 simulation_multiple     = false            # flag for processing multiple files
 simulation_coord        = sks              # simulation coordinates (sks, cks), if i set it to cks then everything is just NaNs
 simulation_a            = 0.0              # dimensionless black hole spin
@@ -36,10 +36,10 @@ simulation_athenak_vars = false
 opacity_table = false
 opacity_file = /PellaShared/kcu8rf/spherical_tabopac_compton/out_opacity_table_nfreq64.txt
 
-mc_input = true
-mc_file = /PellaShared/kcu8rf/sks_ring_comp_lowphot/isothgr.out3.00000.athdf
-mc_freq_file = /PellaShared/kcu8rf/sks_ring_comp_lowphot/sourceterm_frequencies.txt
-compton = true
+mc_input = false
+mc_file = /PellaShared/swd8g/tegan/gr_shell/isothgr.out4.00000.athdf
+mc_freq_file = /PellaShared/swd8g/tegan/gr_shell/sourceterm_frequencies.txt
+compton = false
 stimulated_compton = false
 mc_error = true
 

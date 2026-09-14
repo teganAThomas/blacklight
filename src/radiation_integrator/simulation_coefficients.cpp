@@ -512,7 +512,7 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
         // Go through frequencies
         for (int l = 0; l < image_num_frequencies; l++)
         {
-          //nu_cgs is in the orthonormal frame and nu_fluid_cgs is in the fluid frame
+          //nu_cgs is in the fluid frame freq
           double nu_cgs = 0.0;
           for (int mu = 0; mu < 4; mu++)
             nu_cgs -= kcov[mu] * ucon[mu];//this gives the fluid frame frequency

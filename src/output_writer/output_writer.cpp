@@ -75,12 +75,13 @@ OutputWriter::OutputWriter(const InputReader *p_input_reader_,
   image_lambda = p_input_reader->image_lambda.value();
   image_emission = p_input_reader->image_emission.value();
   image_tau = p_input_reader->image_tau.value();
+  image_mcscat = p_input_reader->image_mcscat.value();
   image_lambda_ave = p_input_reader->image_lambda_ave.value();
   image_emission_ave = p_input_reader->image_emission_ave.value();
   image_tau_int = p_input_reader->image_tau_int.value();
   image_photosphere_int = p_input_reader->image_photosphere_int.value();
   image_crossings = p_input_reader->image_crossings.value();
-  if ((image_time or image_length or image_lambda or image_emission or image_tau or image_lambda_ave
+  if ((image_time or image_length or image_lambda or image_emission or image_tau or image_mcscat or image_lambda_ave
       or image_emission_ave or image_tau_int or image_photosphere_int or image_crossings)
       and not (output_format == OutputFormat::npz))
     throw BlacklightException("Only npz outputs support non-light images.");
@@ -89,6 +90,7 @@ OutputWriter::OutputWriter(const InputReader *p_input_reader_,
   image_offset_lambda = p_radiation_integrator->image_offset_lambda;
   image_offset_emission = p_radiation_integrator->image_offset_emission;
   image_offset_tau = p_radiation_integrator->image_offset_tau;
+  image_offset_mcscat = p_radiation_integrator->image_offset_mcscat;
   image_offset_lambda_ave = p_radiation_integrator->image_offset_lambda_ave;
   image_offset_emission_ave = p_radiation_integrator->image_offset_emission_ave;
   image_offset_tau_int = p_radiation_integrator->image_offset_tau_int;
@@ -216,7 +218,7 @@ void OutputWriter::Write(int snapshot)
   }
 
   // Make shallow copies of image data, reshaping the arrays
-  if (image_light or image_time or image_length or image_lambda or image_emission or image_tau
+  if (image_light or image_time or image_length or image_lambda or image_emission or image_tau or image_mcscat
       or image_lambda_ave or image_emission_ave or image_tau_int or image_photosphere_int or image_crossings)
   {
     image[0] = p_radiation_integrator->image[0];

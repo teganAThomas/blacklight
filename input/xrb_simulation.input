@@ -4,7 +4,7 @@ num_threads = 12           # number of threads to use in parallel
 
 # Output parameters
 output_format = npz                            # format of output file (npz, npy, raw)
-output_file   = output/xrb_gr/shane_xrb_i0_plane_compton.npz  # file to be (over)written with output data
+output_file   = output/xrb_gr/shane_xrb_i0_plane_thomson.npz  # file to be (over)written with output data
 output_camera = false                          # flag for saving camera details
 
 # Checkpoint parameters
@@ -16,7 +16,7 @@ checkpoint_sample_file   = data/sample.dat
 
 # Simulation parameters
 simulation_format       = athena           # format of GRMHD data
-simulation_file         = /PellaShared/swd8g/tegan/scatter_1e8/xrb.out4.00000.athdf  # file containing data dump
+simulation_file         = /PellaShared/swd8g/tegan/scatter_1e9/xrb.out3.00000.athdf  # file containing data dump
 simulation_multiple     = false            # flag for processing multiple files
 simulation_coord        = cks              # simulation coordinates (sks, cks), if i set it to cks then everything is just NaNs
 simulation_a            = 0.3              # dimensionless black hole spin
@@ -36,9 +36,9 @@ opacity_table = false
 opacity_file = data/out_opacity_table_nfreq64.txt
 
 mc_input = true
-mc_file = /PellaShared/swd8g/tegan/scatter_1e8/xrb.out5.00000.athdf
-mc_freq_file = /PellaShared/swd8g/tegan/scatter_1e8/sourceterm_frequencies.txt
-compton = true
+mc_file = /PellaShared/swd8g/tegan/scatter_1e9/xrb.out4.00000.athdf
+mc_freq_file = /PellaShared/swd8g/tegan/scatter_1e9/sourceterm_frequencies.txt
+compton =false
 stimulated_compton = false
 mc_error = true
 
@@ -55,8 +55,8 @@ camera_k_r        = 1.0    # covariant KS r-momentum of photons
 camera_k_th       = 0.0    # covariant KS theta-momentum of photons (using radians)
 camera_k_ph       = 0.0    # covariant KS phi-momentum of photons (using radians)
 camera_rotation   = 0.0    # rotation of camera in degrees (0/90 for north up/left)
-camera_width      = 800.0   # full width of image in gravitational units
-camera_resolution = 32     # number of pixels per side
+camera_width      = 200.0   # full width of image in gravitational units
+camera_resolution = 64     # number of pixels per side
 
 # Ray-tracing parameters
 ray_flat        = false           # flag indicating ray tracing should assume flat spacetime
@@ -84,6 +84,7 @@ image_length          = false     # flag for producing image of geodesic lengths
 image_lambda          = false     # flag for producing image of affine path lengths
 image_emission        = true     # flag for producing image of emission coefficients
 image_tau             = true    # flag for producing image of optical depths
+image_mcscat          = true
 image_lambda_ave      = false     # flag for producing lambda-averaged images
 image_emission_ave    = false     # flag for producing emission-averaged images
 image_tau_int         = false     # flag for producing tau-integrated images

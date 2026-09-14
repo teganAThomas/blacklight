@@ -367,6 +367,8 @@ void InputReader::AssignInputVal(std::string key,std::string val){
       image_emission = ReadBool(val);
     else if (key == "image_tau")
       image_tau = ReadBool(val);
+    else if (key == "image_mcscat")
+      image_mcscat = ReadBool(val);
     else if (key == "image_lambda_ave")
       image_lambda_ave = ReadBool(val);
     else if (key == "image_emission_ave")

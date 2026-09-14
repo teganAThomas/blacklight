@@ -60,6 +60,7 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
         // Prepare integrated quantities
         double integrated_lambda = 0.0;
         double integrated_emission = 0.0;
+        double integrated_mcscat = 0.0;
         double x1_init = sample_pos[adaptive_level](m,0,1);
         double x2_init = sample_pos[adaptive_level](m,0,2);
         double x3_init = sample_pos[adaptive_level](m,0,3);
@@ -96,6 +97,9 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
           double exp_neg = std::exp(-delta_tau);
           double expm1 = std::expm1(delta_tau);
           bool optically_thin = delta_tau <= delta_tau_max;
+          double mcscat;
+          if(mc_error)
+            mcscat = sample_scattering[adaptive_level](m,n,l);
 
           int trace_pixel = m;
 
@@ -153,6 +157,8 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
             integrated_emission += j * delta_lambda_cgs;
           if (image_tau)
             image[adaptive_level](image_offset_tau+l,m) += delta_tau;
+          if (image_mcscat)
+            integrated_mcscat += mcscat * delta_lambda_cgs;
 
 
           if (image_lambda_ave and not std::isnan(cell_values[adaptive_level](0,m,n)))
@@ -240,6 +246,8 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
           image[adaptive_level](image_offset_lambda+l,m) = integrated_lambda;
         if (image_emission)
           image[adaptive_level](image_offset_emission+l,m) = integrated_emission;
+        if (image_mcscat)
+          image[adaptive_level](image_offset_mcscat+l,m) = integrated_mcscat;
         if (image_crossings and l == 0)
           image[adaptive_level](image_offset_crossings,m) = static_cast<double>(crossings_count);
 
