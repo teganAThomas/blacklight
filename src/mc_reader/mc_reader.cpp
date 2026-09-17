@@ -478,9 +478,6 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
               uu2_sim *=simulation_v_c;
               uu3_sim *=simulation_v_c;
 
-              uu1_sim *=simulation_v_c;
-              uu2_sim *=simulation_v_c;
-              uu3_sim *=simulation_v_c;
 
               // Calculate simulation metric
               if(simulation_coord == Coordinates::cks){
