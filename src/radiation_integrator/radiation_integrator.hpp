@@ -100,6 +100,7 @@ struct RadiationIntegrator
   bool image_emission;
   bool image_tau;
   bool image_mcscat;
+  bool image_mcscat_ave;
   bool image_lambda_ave;
   bool image_emission_ave;
   bool image_tau_int;
@@ -305,6 +306,8 @@ struct RadiationIntegrator
   int image_offset_emission = 0;
   int image_offset_tau = 0;
   int image_offset_mcscat = 0;
+  int image_offset_mcscat_ave = 0;
+  int image_offset_mcscat_ave_weight = 0;
   int image_offset_lambda_ave = 0;
   int image_offset_emission_ave = 0;
   int image_offset_tau_int = 0;

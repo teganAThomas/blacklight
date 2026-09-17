@@ -790,7 +790,10 @@ void RadiationIntegrator::SampleSimulation()
           
           if(mc_input){
             for(int l=0; l<mc_num_freqs;l++){
-              sample_scattering[adaptive_level](m,n,l) = grid_scatter[t](l,b,k,j,i);  
+              sample_scattering[adaptive_level](m,n,l) = grid_scatter[t](l,b,k,j,i);
+              if(sample_scattering[adaptive_level](m,n,l)<0.0){
+               std::printf("Monte Carlo scattering value is non-positive at pixel %d , step %d , frequency index %d , block %d , value %g \n",m,n,l,b,sample_scattering[adaptive_level](m,n,l));
+              }  
               if(mc_error)
                 sample_scattering_err[adaptive_level](m,n,l) = grid_scatter_err[t](l,b,k,j,i); 
             }

@@ -38,7 +38,7 @@ opacity_file = data/out_opacity_table_nfreq64.txt
 mc_input = true
 mc_file = /PellaShared/swd8g/tegan/scatter_1e9/xrb.out4.00000.athdf
 mc_freq_file = /PellaShared/swd8g/tegan/scatter_1e9/sourceterm_frequencies.txt
-compton =false
+compton = false
 stimulated_compton = false
 mc_error = true
 
@@ -85,6 +85,7 @@ image_lambda          = false     # flag for producing image of affine path leng
 image_emission        = true     # flag for producing image of emission coefficients
 image_tau             = true    # flag for producing image of optical depths
 image_mcscat          = true
+image_mcscat_ave      = true
 image_lambda_ave      = false     # flag for producing lambda-averaged images
 image_emission_ave    = false     # flag for producing emission-averaged images
 image_tau_int         = false     # flag for producing tau-integrated images

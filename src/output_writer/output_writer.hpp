@@ -61,6 +61,7 @@ struct OutputWriter
   bool image_emission;
   bool image_tau;
   bool image_mcscat;
+  bool image_mcscat_ave;
   bool image_lambda_ave;
   bool image_emission_ave;
   bool image_tau_int;
@@ -72,6 +73,8 @@ struct OutputWriter
   int image_offset_emission;
   int image_offset_tau;
   int image_offset_mcscat;
+  int image_offset_mcscat_ave;
+  int image_offset_mcscat_ave_weight;
   int image_offset_lambda_ave;
   int image_offset_emission_ave;
   int image_offset_tau_int;

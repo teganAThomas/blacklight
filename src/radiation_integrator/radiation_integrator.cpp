@@ -153,6 +153,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
   image_lambda = p_input_reader->image_lambda.value();
   image_emission = p_input_reader->image_emission.value();
   image_mcscat = p_input_reader->image_mcscat.value();
+  image_mcscat_ave = p_input_reader->image_mcscat_ave.value();
   image_tau = p_input_reader->image_tau.value();
   image_free_free = p_input_reader->image_free_free.value();
   image_scattering = p_input_reader->image_scattering.value();
@@ -247,7 +248,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     }
   }
   if (not (image_light or image_time or image_length or image_lambda or image_emission or image_tau or image_mcscat
-      or image_lambda_ave or image_emission_ave or image_tau_int or image_photosphere_int or image_crossings
+      or image_mcscat_ave or image_lambda_ave or image_emission_ave or image_tau_int or image_photosphere_int or image_crossings
       or render_num_images > 0))
     throw BlacklightException("No image or rendering selected.");
 
@@ -505,6 +506,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission = image_num_quantities;
     image_offset_tau = image_num_quantities;
     image_offset_mcscat = image_num_quantities;
+    image_offset_mcscat_ave = image_num_quantities;
+    image_offset_mcscat_ave_weight = image_num_quantities;
     image_offset_lambda_ave = image_num_quantities;
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
@@ -519,6 +522,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission = image_num_quantities;
     image_offset_tau = image_num_quantities;
     image_offset_mcscat = image_num_quantities;
+    image_offset_mcscat_ave = image_num_quantities;
+    image_offset_mcscat_ave_weight = image_num_quantities;
     image_offset_lambda_ave = image_num_quantities;
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
@@ -533,6 +538,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission = image_num_quantities;
     image_offset_tau = image_num_quantities;
     image_offset_mcscat = image_num_quantities;
+    image_offset_mcscat_ave = image_num_quantities;
+    image_offset_mcscat_ave_weight = image_num_quantities;
     image_offset_lambda_ave = image_num_quantities;
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
@@ -546,6 +553,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission = image_num_quantities;
     image_offset_tau = image_num_quantities;
     image_offset_mcscat = image_num_quantities;
+    image_offset_mcscat_ave = image_num_quantities;
+    image_offset_mcscat_ave_weight = image_num_quantities;
     image_offset_lambda_ave = image_num_quantities;
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
@@ -558,6 +567,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission = image_num_quantities;
     image_offset_tau = image_num_quantities;
     image_offset_mcscat = image_num_quantities;
+    image_offset_mcscat_ave = image_num_quantities;
+    image_offset_mcscat_ave_weight = image_num_quantities;
     image_offset_lambda_ave = image_num_quantities;
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
@@ -569,6 +580,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_num_quantities += image_num_frequencies;
     image_offset_tau = image_num_quantities;
     image_offset_mcscat = image_num_quantities;
+    image_offset_mcscat_ave = image_num_quantities;
+    image_offset_mcscat_ave_weight = image_num_quantities;
     image_offset_lambda_ave = image_num_quantities;
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
@@ -579,6 +592,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
   {
     image_num_quantities += image_num_frequencies;
     image_offset_mcscat = image_num_quantities;
+    image_offset_mcscat_ave = image_num_quantities;
+    image_offset_mcscat_ave_weight = image_num_quantities;
     image_offset_lambda_ave = image_num_quantities;
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
@@ -588,6 +603,17 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
   if (image_mcscat)
   {
     image_num_quantities += image_num_frequencies;
+    image_offset_mcscat_ave = image_num_quantities;
+    image_offset_mcscat_ave_weight = image_num_quantities;
+    image_offset_lambda_ave = image_num_quantities;
+    image_offset_emission_ave = image_num_quantities;
+    image_offset_tau_int = image_num_quantities;
+    image_offset_photosphere_int = image_num_quantities;
+    image_offset_crossings = image_num_quantities;
+  }
+  if (image_mcscat_ave)
+  {
+    image_num_quantities += 2*image_num_frequencies;
     image_offset_lambda_ave = image_num_quantities;
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;

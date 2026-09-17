@@ -136,6 +136,7 @@ struct InputReader
   std::optional<bool> image_emission;
   std::optional<bool> image_tau;
   std::optional<bool> image_mcscat;
+  std::optional<bool> image_mcscat_ave;
   std::optional<bool> image_lambda_ave;
   std::optional<bool> image_emission_ave;
   std::optional<bool> image_tau_int;

@@ -76,12 +76,13 @@ OutputWriter::OutputWriter(const InputReader *p_input_reader_,
   image_emission = p_input_reader->image_emission.value();
   image_tau = p_input_reader->image_tau.value();
   image_mcscat = p_input_reader->image_mcscat.value();
+  image_mcscat_ave = p_input_reader->image_mcscat_ave.value();
   image_lambda_ave = p_input_reader->image_lambda_ave.value();
   image_emission_ave = p_input_reader->image_emission_ave.value();
   image_tau_int = p_input_reader->image_tau_int.value();
   image_photosphere_int = p_input_reader->image_photosphere_int.value();
   image_crossings = p_input_reader->image_crossings.value();
-  if ((image_time or image_length or image_lambda or image_emission or image_tau or image_mcscat or image_lambda_ave
+  if ((image_time or image_length or image_lambda or image_emission or image_tau or image_mcscat or image_mcscat_ave or image_lambda_ave
       or image_emission_ave or image_tau_int or image_photosphere_int or image_crossings)
       and not (output_format == OutputFormat::npz))
     throw BlacklightException("Only npz outputs support non-light images.");
@@ -219,7 +220,7 @@ void OutputWriter::Write(int snapshot)
 
   // Make shallow copies of image data, reshaping the arrays
   if (image_light or image_time or image_length or image_lambda or image_emission or image_tau or image_mcscat
-      or image_lambda_ave or image_emission_ave or image_tau_int or image_photosphere_int or image_crossings)
+      or image_mcscat_ave or image_lambda_ave or image_emission_ave or image_tau_int or image_photosphere_int or image_crossings)
   {
     image[0] = p_radiation_integrator->image[0];
     image[0].n3 = image[0].n2;

@@ -159,6 +159,21 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
             image[adaptive_level](image_offset_tau+l,m) += delta_tau;
           if (image_mcscat)
             integrated_mcscat += mcscat * delta_lambda_cgs;
+          //the problem with how i do things is that mcscat is in comoving frame and 
+          // tau is calculated in invariant form using alpha_I. 
+          // dont know if we can simply convert alpha_I to alpha_nu and be fine and accurately integrate without changing affine parameter
+          // I think it's fine because if it's invariant then it applies to any frame
+          // the big thing is getting the proper comoving nu_cgs. for now i'm just using the camera frame frequency
+          // i think the delta_lambda_cgs and its image_frequencies in the denom already handles converting alpha_I potentially
+          if (image_mcscat_ave){
+            double tau_0 = 0.3;
+            double tau_1 = 3.0;
+
+            if(image[adaptive_level](image_offset_tau+l,m) >= tau_0 and (image[adaptive_level](image_offset_tau+l,m) <= tau_1 || previous_delta_tau < tau_0) and delta_tau!=0.0){
+              image[adaptive_level](image_offset_mcscat_ave+l,m) += mcscat * delta_tau;
+              image[adaptive_level](image_offset_mcscat_ave_weight+l,m) += delta_tau;
+            }
+          }
 
 
           if (image_lambda_ave and not std::isnan(cell_values[adaptive_level](0,m,n)))
@@ -201,8 +216,6 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
               //delta_tau sometimes equals 0 which causes Nan's
               if(image[adaptive_level](image_offset_tau+l,m) >= tau_0 and (image[adaptive_level](image_offset_tau+l,m) <= tau_1 || previous_delta_tau < tau_0) and (not std::isnan(cell_values[adaptive_level](a,m,n))) and delta_tau!=0.0){
                 image[adaptive_level](index,m)+= cell_values[adaptive_level](a,m,n);///delta_tau;
-              }else{
-                image[adaptive_level](index,m) += 0.0;
               }
             }
             /*int index = image_offset_photosphere_int + l * (CellValues::num_cell_values+3) +CellValues::num_cell_values;
@@ -236,7 +249,7 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
               crossings_count++;
             plane_sign = plane_sign_new;
           }
-          if(image_photosphere_int){
+          if(image_photosphere_int || image_mcscat_ave){
             previous_delta_tau = image[adaptive_level](image_offset_tau+l,m);
           }
         }
@@ -252,6 +265,9 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
           image[adaptive_level](image_offset_crossings,m) = static_cast<double>(crossings_count);
 
         // Normalize integrated quantities
+        if (image_mcscat_ave){
+          image[adaptive_level](image_offset_mcscat_ave+l,m) /= image[adaptive_level](image_offset_mcscat_ave_weight+l,m);
+        }
         if (image_lambda_ave)
           for (int a = 0; a < CellValues::num_cell_values; a++)
           {

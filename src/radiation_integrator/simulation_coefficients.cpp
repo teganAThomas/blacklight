@@ -246,7 +246,7 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
   double v_unit = simulation_v_c;
   //double t_unit = 5444097725001.523;
   //double e_unit = t_unit*d_unit;
-  double e_unit = d_unit *v_unit*v_unit*Physics::c*Physics::c;
+  double e_unit = d_unit*v_unit*v_unit*Physics::c*Physics::c;
   std::printf("d_unit = %.5e, v_unit = %.5e, e_unit = %.5e\n",d_unit,v_unit,e_unit);
   //double e_unit = 1.0;
   bool firstTime = true;
@@ -302,13 +302,15 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
         double bb3_sim = sample_bb3[adaptive_level](m,n);        
 
         //scale model velocities appropriately
+        //std::printf("uu1_sim = %.5e, uu2_sim = %.5e, uu3_sim = %.5e\n",uu1_sim,uu2_sim,uu3_sim);
         uu1_sim *= v_unit;
         uu2_sim *= v_unit;
         uu3_sim *= v_unit;
+        //std::printf("second uu1_sim = %.5e, uu2_sim = %.5e, uu3_sim = %.5e\n",uu1_sim,uu2_sim,uu3_sim);
         //TEGAN: try to understand why I have to multiply v_unit twice!!
-        uu1_sim *= v_unit;
-        uu2_sim *= v_unit;
-        uu3_sim *= v_unit;
+       
+
+        //std::printf("third uu1_sim = %.5e, uu2_sim = %.5e, uu3_sim = %.5e\n",uu1_sim,uu2_sim,uu3_sim);
 
         // Calculate densities and pressures
         double rho_cgs = rho * d_unit;
@@ -343,6 +345,7 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
         for (int mu = 0; mu < 4; mu++)
           for (int nu = 0; nu < 4; nu++)
             ucov_sim[mu] += gcov_sim[mu][nu] * ucon_sim[nu];
+        
 
         // Calculate simulation magnetic field
         double bcon_sim[4];
@@ -391,7 +394,6 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
           }
           
           kb_tt_e_cgs = kb_tt_tot_cgs;
-          
           theta_e = kb_tt_e_cgs / (Physics::m_e * Physics::c * Physics::c);
 
         }

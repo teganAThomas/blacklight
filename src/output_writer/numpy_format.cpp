@@ -50,7 +50,7 @@ void OutputWriter::WriteNpz()
       + (image_light and model_type == ModelType::simulation and image_polarization ? 3 : 0)
       + (mc_error ? 1 : 0)
       + (image_time ? 1 : 0) + (image_length ? 1 : 0) + (image_lambda ? 1 : 0)
-      + (image_emission ? 1 : 0) + (image_tau ? 1 : 0) + (image_mcscat ? 1 : 0)
+      + (image_emission ? 1 : 0) + (image_tau ? 1 : 0) + (image_mcscat ? 1 : 0) + (image_mcscat_ave ? 2 : 0)
       + (image_lambda_ave ? CellValues::num_cell_values : 0)
       + (image_emission_ave ? CellValues::num_cell_values : 0)
       + (image_tau_int ? CellValues::num_cell_values : 0) 
@@ -257,6 +257,25 @@ void OutputWriter::WriteNpz()
         GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
     local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
         data_lengths[array_offset], "mcscat", &local_header_buffers[array_offset]);
+    array_offset++;
+  }
+  if (image_mcscat_ave)
+  {
+    // output the mcscat_ave
+    image_shallow_copy = image[0];
+    image_shallow_copy.Slice(3, image_offset_mcscat_ave, image_offset_mcscat_ave + image_num_frequencies - 1);
+    data_lengths[array_offset] =
+        GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
+    local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
+        data_lengths[array_offset], "mcscat_ave", &local_header_buffers[array_offset]);
+    array_offset++;
+    // output the mcscat_ave_weight
+    image_shallow_copy = image[0];
+    image_shallow_copy.Slice(3, image_offset_mcscat_ave_weight, image_offset_mcscat_ave_weight + image_num_frequencies - 1);
+    data_lengths[array_offset] =
+        GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
+    local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
+        data_lengths[array_offset], "mcscat_ave_weight", &local_header_buffers[array_offset]);
     array_offset++;
   }
   if (image_lambda_ave)
@@ -541,6 +560,32 @@ void OutputWriter::WriteNpz()
       image_shallow_copy = image[level];
       image_shallow_copy.Slice(4, image_offset_mcscat,
           image_offset_mcscat + image_num_frequencies - 1);
+      data_lengths[array_offset] =
+          GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
+      local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
+          data_lengths[array_offset], name_buffer, &local_header_buffers[array_offset]);
+      array_offset++;
+    }
+    if (image_mcscat_ave)
+    {
+      num_written = std::snprintf(name_buffer, max_name_length, "adaptive_mcscat_ave_%d", level);
+      if (num_written < 0 or num_written >= max_name_length)
+        throw BlacklightException("Error naming output array.");
+      image_shallow_copy = image[level];
+      image_shallow_copy.Slice(4, image_offset_mcscat_ave,
+          image_offset_mcscat_ave + image_num_frequencies - 1);
+      data_lengths[array_offset] =
+          GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
+      local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
+          data_lengths[array_offset], name_buffer, &local_header_buffers[array_offset]);
+      array_offset++;
+
+      num_written = std::snprintf(name_buffer, max_name_length, "adaptive_mcscat_ave_weight_%d", level);
+      if (num_written < 0 or num_written >= max_name_length)
+        throw BlacklightException("Error naming output array.");
+      image_shallow_copy = image[level];
+      image_shallow_copy.Slice(4, image_offset_mcscat_ave_weight,
+          image_offset_mcscat_ave_weight + image_num_frequencies - 1);
       data_lengths[array_offset] =
           GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
