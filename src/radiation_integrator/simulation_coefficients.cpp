@@ -648,8 +648,9 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
             
             
             //need to include this if statement as some cells may not be visited at all and shouldn't get absorption there bc would be unfair???
-            if(scattering!=0.0){
-              alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs;
+            if(rho_cgs!=0.0){
+              double x = Physics::h*nu_cgs/(Physics::m_e*Physics::c*Physics::c);
+              alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs*(1.-2.0*x);
               j_i[adaptive_level](l,m,n) += scattering;
               if(mc_error) scat_err[adaptive_level](l,m,n) += scattering_error;
             }

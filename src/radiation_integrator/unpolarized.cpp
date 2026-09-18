@@ -86,6 +86,55 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
           kcov[1] = sample_dir[adaptive_level](m,n,1);
           kcov[2] = sample_dir[adaptive_level](m,n,2);
           kcov[3] = sample_dir[adaptive_level](m,n,3);
+
+          double gcov_sim[4][4];
+          double gcon_sim[4][4];
+          double gcov[4][4];
+          double gcon[4][4];
+          double jacobian[4][4];
+
+          double uu1_sim = sample_uu1[adaptive_level](m,n);
+          double uu2_sim = sample_uu2[adaptive_level](m,n);
+          double uu3_sim = sample_uu3[adaptive_level](m,n);
+          double bb1_sim = sample_bb1[adaptive_level](m,n);
+          double bb2_sim = sample_bb2[adaptive_level](m,n);
+          double bb3_sim = sample_bb3[adaptive_level](m,n);      
+
+
+          // Calculate simulation metric
+          CovariantSimulationMetric(x1, x2, x3, gcov_sim);
+          ContravariantSimulationMetric(x1, x2, x3, gcon_sim);
+
+          // Calculate simulation velocity
+          double uu0_sim = std::sqrt(1.0 + gcov_sim[1][1] * uu1_sim * uu1_sim
+              + 2.0 * gcov_sim[1][2] * uu1_sim * uu2_sim + 2.0 * gcov_sim[1][3] * uu1_sim * uu3_sim
+              + gcov_sim[2][2] * uu2_sim * uu2_sim + 2.0 * gcov_sim[2][3] * uu2_sim * uu3_sim
+              + gcov_sim[3][3] * uu3_sim * uu3_sim);
+          double lapse_sim = 1.0 / std::sqrt(-gcon_sim[0][0]);
+          double shift1_sim = -gcon_sim[0][1] / gcon_sim[0][0];
+          double shift2_sim = -gcon_sim[0][2] / gcon_sim[0][0];
+          double shift3_sim = -gcon_sim[0][3] / gcon_sim[0][0];
+          double ucon_sim[4];
+          ucon_sim[0] = uu0_sim / lapse_sim;
+          ucon_sim[1] = uu1_sim - shift1_sim * uu0_sim / lapse_sim;
+          ucon_sim[2] = uu2_sim - shift2_sim * uu0_sim / lapse_sim;
+          ucon_sim[3] = uu3_sim - shift3_sim * uu0_sim / lapse_sim;
+
+          CoordinateJacobian(x1, x2, x3, jacobian);
+
+          // Transform contravariant velocity and magnetic field to geodesic coordinates
+          double ucon[4] = {};
+          for (int mu = 0; mu < 4; mu++)
+            for (int nu = 0; nu < 4; nu++)
+              ucon[mu] += jacobian[mu][nu] * ucon_sim[nu];
+
+
+          double nu_cgs = 0.0;
+          for (int mu = 0; mu < 4; mu++)
+            nu_cgs -= kcov[mu] * ucon[mu];//this gives the fluid frame frequency
+          nu_cgs *= image_frequencies(l) * momentum_factors[adaptive_level](m);
+
+
           double j = std::numeric_limits<double>::quiet_NaN();
           if (image_light or image_emission or image_emission_ave)
             j = j_i[adaptive_level](l,m,n);
@@ -170,8 +219,8 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
             double tau_1 = 3.0;
 
             if(image[adaptive_level](image_offset_tau+l,m) >= tau_0 and (image[adaptive_level](image_offset_tau+l,m) <= tau_1 || previous_delta_tau < tau_0) and delta_tau!=0.0){
-              image[adaptive_level](image_offset_mcscat_ave+l,m) += mcscat * delta_tau;
-              image[adaptive_level](image_offset_mcscat_ave_weight+l,m) += delta_tau;
+              image[adaptive_level](image_offset_mcscat_ave+l,m) += mcscat * delta_tau/nu_cgs;
+              image[adaptive_level](image_offset_mcscat_ave_weight+l,m) += delta_tau/nu_cgs;
             }
           }
 

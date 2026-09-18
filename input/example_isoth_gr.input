@@ -81,7 +81,6 @@ image_emission        = false    # flag for producing image of emission coeffici
 image_tau             = false     # flag for producing image of optical depths
 image_lambda_ave      = false     # flag for producing lambda-averaged images
 image_mcscat          = false
-image_mcscat_ave      = false
 image_emission_ave    = false     # flag for producing emission-averaged images
 image_tau_int         = false     # flag for producing tau-integrated images
 image_photosphere_int = false

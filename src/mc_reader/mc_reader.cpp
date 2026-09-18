@@ -383,12 +383,14 @@ void MCReader::Gradient(Array<float> &grad, Array<float> &f, Array<double> &x){
     for(int k=0;k<f.n3;k++){
       for(int j=0;j<f.n2;j++){
         for(int i=0;i<f.n1;i++){
-          grad(0,b,k,j,i)    = (f(1,b,k,j,i)   - f(0,b,k,j,i))   /(x(1)-x(0));
-          grad(nx-1,b,k,j,i) = (f(nx-1,b,k,j,i) - f(nx-2,b,k,j,i))/(x(nx-1)-x(nx-2));
+          grad(0,b,k,j,i)    = (std::max<float>(0.0,f(1,b,k,j,i))   - std::max<float>(0.0,f(0,b,k,j,i)))   /(x(1)-x(0));
+          grad(nx-1,b,k,j,i) = (std::max<float>(0.0,f(nx-1,b,k,j,i)) - std::max<float>(0.0,f(nx-2,b,k,j,i)))/(x(nx-1)-x(nx-2));
           if(mc_error){
-            float f1 = f(1+nx,b,k,j,i), f0 = f(nx,b,k,j,i);
+            float f1 = std::max<float>(0.0,f(1+nx,b,k,j,i));
+            float f0 = std::max<float>(0.0,f(nx,b,k,j,i));
             grad(nx,b,k,j,i) = std::sqrt((f1*f1 + f0*f0))/(x(1)-x(0));
-            float fN1 = f(2*nx-1,b,k,j,i), fN2 = f(2*nx-2,b,k,j,i);
+            float fN1 = std::max<float>(0.0,f(2*nx-1,b,k,j,i));
+            float fN2 = std::max<float>(0.0,f(2*nx-2,b,k,j,i));
             grad(2*nx-1,b,k,j,i) = std::sqrt((fN1*fN1 + fN2*fN2))/(x(nx-1)-x(nx-2));
           }
         }
