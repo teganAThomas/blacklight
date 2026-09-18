@@ -4,7 +4,7 @@ num_threads = 12           # number of threads to use in parallel
 
 # Output parameters
 output_format = npz                            # format of output file (npz, npy, raw)
-output_file   = output/xrb_gr/shane_xrb_i0_plane_thomson.npz  # file to be (over)written with output data
+output_file   = output/xrb_gr/shane_xrb_i0_plane_thomson_interp.npz  # file to be (over)written with output data
 output_camera = false                          # flag for saving camera details
 
 # Checkpoint parameters
@@ -25,8 +25,8 @@ simulation_all_cgs      = false
 simulation_rho_cgs      = 1e-4          # unit code density in g/cm^3
 simulation_v_c          = 1.0             # unit code v0
 simulation_r_rg         = 1.0              # flag indicating r_g/simulation r_units. for r_g it would be 1 and for r_s it would be 2.
-simulation_interp       = false             # flag indicating interpolation should be used
-simulation_block_interp = false            # flag indicating interpolation should cross blocks  
+simulation_interp       = true             # flag indicating interpolation should be used
+simulation_block_interp = true            # flag indicating interpolation should cross blocks  
 simulation_hd_only = true
 simulation_mc_temp = true
 simulation_athenak_vars = false

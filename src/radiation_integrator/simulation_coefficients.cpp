@@ -602,11 +602,11 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
             //TEGAN:why am i doing it over log10???
             // If the frequency is outside the range of the MC frequencies + delta_nu, then default to no scattering
             
-            if (mid==0 && (std::log(nu_cgs)+mc_dlf)<std::log(mc_freqs(mid))){
+            if (mid==0 && (std::log10(nu_cgs)+mc_dlf)<std::log10(mc_freqs(mid))){
               scattering = 0.0;
 
               scattering_error = 0.0;
-            }else if(mid==mc_num_freqs-1 && (std::log(nu_cgs)-mc_dlf)>std::log(mc_freqs(mid))){
+            }else if(mid==mc_num_freqs-1 && (std::log10(nu_cgs)-mc_dlf)>std::log10(mc_freqs(mid))){
               scattering = 0.0;
 
               scattering_error = 0.0;
@@ -615,28 +615,28 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
               //  std::printf("nu_fluid_cgs = %.5e, mid = %d, mc_freqs(mid) = %.5e, mc_dlf = %.5e\n", nu_cgs, mid, mc_freqs(mid), mc_dlf);
               //}
               //perform linear interpolation in linear-log space to find scattering value at nu_cgs
-              if(std::log(mc_freqs(mid))==std::log(nu_cgs) || mid==0 || mid==mc_num_freqs-1){
+              if(std::log10(mc_freqs(mid))==std::log10(nu_cgs) || mid==0 || mid==mc_num_freqs-1){
                 scattering = sample_scattering[adaptive_level](m,n,mid)*Physics::sigma_t*n_e_cgs/(nu_cgs*nu_cgs);
 
                 if(mc_error) scattering_error = sample_scattering_err[adaptive_level](m,n,mid)*std::pow(Physics::sigma_t*n_e_cgs/(nu_cgs*nu_cgs),2.);
-              }else if(std::log(mc_freqs(mid))<std::log(nu_cgs)){
+              }else if(std::log10(mc_freqs(mid))<std::log10(nu_cgs)){
                 double scattering_low = sample_scattering[adaptive_level](m,n,mid)*Physics::sigma_t*n_e_cgs/(mc_freqs(mid)*mc_freqs(mid));
                 double scattering_high = sample_scattering[adaptive_level](m,n,mid+1)*Physics::sigma_t*n_e_cgs/(mc_freqs(mid+1)*mc_freqs(mid+1));
-                double log_nu_low = std ::log(mc_freqs(mid));
-                double log_nu_high = std::log(mc_freqs(mid+1));
-                double scattering_interp = scattering_low*(log_nu_high-std::log(nu_cgs))/(log_nu_high-log_nu_low) + (scattering_high) * (std::log(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low);
+                double log_nu_low = std ::log10(mc_freqs(mid));
+                double log_nu_high = std::log10(mc_freqs(mid+1));
+                double scattering_interp = scattering_low*(log_nu_high-std::log10(nu_cgs))/(log_nu_high-log_nu_low) + (scattering_high) * (std::log10(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low);
                 scattering = scattering_interp;
 
-                if(mc_error) scattering_error = sample_scattering_err[adaptive_level](m,n,mid)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid)*mc_freqs(mid)))*(log_nu_high-std::log(nu_cgs))/(log_nu_high-log_nu_low),2.) + sample_scattering_err[adaptive_level](m,n,mid+1)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid+1)*mc_freqs(mid+1)))* (std::log(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low),2.);
+                if(mc_error) scattering_error = sample_scattering_err[adaptive_level](m,n,mid)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid)*mc_freqs(mid)))*(log_nu_high-std::log10(nu_cgs))/(log_nu_high-log_nu_low),2.) + sample_scattering_err[adaptive_level](m,n,mid+1)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid+1)*mc_freqs(mid+1)))* (std::log10(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low),2.);
               }else{
                 double scattering_low = sample_scattering[adaptive_level](m,n,mid-1)*Physics::sigma_t*n_e_cgs/(mc_freqs(mid-1)*mc_freqs(mid-1));
                 double scattering_high = sample_scattering[adaptive_level](m,n,mid)*Physics::sigma_t*n_e_cgs/(mc_freqs(mid)*mc_freqs(mid));
-                double log_nu_low = std ::log(mc_freqs(mid-1));
-                double log_nu_high = std::log(mc_freqs(mid));
-                double scattering_interp = scattering_low*(log_nu_high-std::log(nu_cgs))/(log_nu_high-log_nu_low) + (scattering_high) * (std::log(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low);
+                double log_nu_low = std ::log10(mc_freqs(mid-1));
+                double log_nu_high = std::log10(mc_freqs(mid));
+                double scattering_interp = scattering_low*(log_nu_high-std::log10(nu_cgs))/(log_nu_high-log_nu_low) + (scattering_high) * (std::log10(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low);
                 scattering = scattering_interp;
 
-                if(mc_error) scattering_error = sample_scattering_err[adaptive_level](m,n,mid-1)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid-1)*mc_freqs(mid-1)))*(log_nu_high-std::log(nu_cgs))/(log_nu_high-log_nu_low),2.) + sample_scattering_err[adaptive_level](m,n,mid)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid)*mc_freqs(mid)))* (std::log(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low),2.);
+                if(mc_error) scattering_error = sample_scattering_err[adaptive_level](m,n,mid-1)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid-1)*mc_freqs(mid-1)))*(log_nu_high-std::log10(nu_cgs))/(log_nu_high-log_nu_low),2.) + sample_scattering_err[adaptive_level](m,n,mid)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid)*mc_freqs(mid)))* (std::log10(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low),2.);
               }
              /* scattering = sample_scattering[adaptive_level](m,n,mid)*Physics::sigma_t*n_e_cgs/(nu_cgs*nu_cgs);
 
