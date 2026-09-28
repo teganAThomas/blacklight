@@ -691,7 +691,7 @@ void MCReader::SetHDF5DoubleArray(const unsigned char *datatype_raw,
       double_array.Allocate(static_cast<int>(dims[0]), static_cast<int>(dims[1]));
     else if (static_cast<unsigned long int>(double_array.n2) != dims[0]
         or static_cast<unsigned long int>(double_array.n1) != dims[1]
-        or static_cast<unsigned int>(double_array.n_tot) != num_elements)
+        or static_cast<unsigned long int>(double_array.n_tot) != num_elements)
       throw BlacklightException("Array dimension mismatch.");
   }
   else
@@ -716,14 +716,14 @@ void MCReader::SetHDF5DoubleArray(const unsigned char *datatype_raw,
 
       // Initialize array
       #pragma omp for schedule(static)
-      for (unsigned int n = 0; n < num_elements; n++)
+      for (unsigned long int n = 0; n < num_elements; n++)
       {
         if (rev_endian)
           for (unsigned int m = 0; m < size; m++)
             std::memcpy(buffer + size - 1 - m, data_raw + n * size + m, 1);
         else
           std::memcpy(buffer, data_raw + n * size, size);
-        double_array(n) = *reinterpret_cast<double *>(buffer);
+        double_array.data[n] = *reinterpret_cast<double *>(buffer);
       }
 
       // Free buffer
@@ -799,16 +799,16 @@ void MCReader::SetHDF5DoubleArray(const unsigned char *datatype_raw,
   unsigned long int *dims;
   int num_dims;
   ReadHDF5DataspaceDims(dataspace_raw, &dims, &num_dims);
-  unsigned int num_elements = 1;
+  unsigned long int num_elements = 1;
   for (int n = 0; n < num_dims; n++)
-    num_elements *= static_cast<unsigned int>(dims[n]);
+    num_elements *= dims[n];
 
   // Allocate array
   if (num_dims == 0)
   {
     if (not float_array.allocated)
       float_array.Allocate(1);
-    else if (static_cast<unsigned int>(float_array.n_tot) != num_elements)
+    else if (static_cast<unsigned long int>(float_array.n_tot) != num_elements)
       throw BlacklightException("Array dimension mismatch.");
   }
   else if (num_dims == 4)
@@ -820,7 +820,7 @@ void MCReader::SetHDF5DoubleArray(const unsigned char *datatype_raw,
         or static_cast<unsigned long int>(float_array.n3) != dims[1]
         or static_cast<unsigned long int>(float_array.n2) != dims[2]
         or static_cast<unsigned long int>(float_array.n1) != dims[3]
-        or static_cast<unsigned int>(float_array.n_tot) != num_elements)
+        or static_cast<unsigned long int>(float_array.n_tot) != num_elements)
       throw BlacklightException("Array dimension mismatch.");
   }
   else if (num_dims == 5)
@@ -833,7 +833,7 @@ void MCReader::SetHDF5DoubleArray(const unsigned char *datatype_raw,
         or static_cast<unsigned long int>(float_array.n3) != dims[2]
         or static_cast<unsigned long int>(float_array.n2) != dims[3]
         or static_cast<unsigned long int>(float_array.n1) != dims[4]
-        or static_cast<unsigned int>(float_array.n_tot) != num_elements)
+        or static_cast<unsigned long int>(float_array.n_tot) != num_elements)
       throw BlacklightException("Array dimension mismatch.");
   }
   else
@@ -848,14 +848,14 @@ void MCReader::SetHDF5DoubleArray(const unsigned char *datatype_raw,
 
     // Initialize array
     #pragma omp for schedule(static)
-    for (unsigned int n = 0; n < num_elements; n++)
+    for (unsigned long int n = 0; n < num_elements; n++)
     {
       if (rev_endian)
         for (unsigned int m = 0; m < size; m++)
           std::memcpy(buffer + size - 1 - m, data_raw + n * size + m, 1);
       else
         std::memcpy(buffer, data_raw + n * size, size);
-      float_array(n) = static_cast<double>(*reinterpret_cast<double *>(buffer));
+      float_array.data[n] = static_cast<double>(*reinterpret_cast<double *>(buffer));
     }
 
     // Free buffer
