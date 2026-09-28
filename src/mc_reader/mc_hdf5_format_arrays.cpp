@@ -153,6 +153,33 @@ void MCReader::ReadHDF5DoubleArray(const char *name, Array<double> &double_array
 
 //--------------------------------------------------------------------------------------------------
 
+// Function to read float array dataset from HDF5 file by name
+// Inputs:
+//   name: name of dataset
+// Outputs:
+//   float_array: array allocated and set (indirectly)
+// Notes:
+//   Changes stream pointer.
+void MCReader::ReadHDF5DoubleArray(const char *name, Array<float> &float_array)
+{
+  // Locate header
+  unsigned long int header_address =
+      ReadHDF5DatasetHeaderAddress(name, root_btree_address, root_data_segment_address);
+
+  // Read header
+  unsigned char *datatype_raw, *dataspace_raw, *data_raw;
+  ReadHDF5DataObjectHeader(header_address, &datatype_raw, &dataspace_raw, &data_raw);
+
+  // Set array
+  SetHDF5DoubleArray(datatype_raw, dataspace_raw, data_raw, float_array);
+  delete[] datatype_raw;
+  delete[] dataspace_raw;
+  delete[] data_raw;
+  return;
+}
+
+//--------------------------------------------------------------------------------------------------
+
 // Function to initialize string array dataset from HDF5
 // Inputs:
 //   datatype_raw: raw datatype description
@@ -658,26 +685,171 @@ void MCReader::SetHDF5DoubleArray(const unsigned char *datatype_raw,
       double_array.Allocate(1);
     else if (static_cast<unsigned int>(double_array.n_tot) != num_elements)
       throw BlacklightException("Array dimension mismatch.");
+  }else if (num_dims == 2)
+  {
+    if (not double_array.allocated)
+      double_array.Allocate(static_cast<int>(dims[0]), static_cast<int>(dims[1]));
+    else if (static_cast<unsigned long int>(double_array.n2) != dims[0]
+        or static_cast<unsigned long int>(double_array.n1) != dims[1]
+        or static_cast<unsigned int>(double_array.n_tot) != num_elements)
+      throw BlacklightException("Array dimension mismatch.");
   }
   else
     throw BlacklightException("Unexpected HDF5 floating-point array size.");
   delete[] dims;
 
-  // Allocate buffer
-  char *buffer = new char[size];
-
-  // Initialize array
-  for (unsigned int n = 0; n < num_elements; n++)
+  // Work in parallel
+  #pragma omp parallel
   {
-    if (rev_endian)
-      for (unsigned int m = 0; m < size; m++)
-        std::memcpy(buffer + size - 1 - m, data_raw + n * size + m, 1);
-    else
-      std::memcpy(buffer, data_raw + n * size, size);
-    double_array(n) = *reinterpret_cast<double *>(buffer);
-  }
+      // Allocate buffer
+      char *buffer = new char[size];
 
-  // Free buffer
-  delete[] buffer;
+      // Initialize array
+      #pragma omp for schedule(static)
+      for (unsigned int n = 0; n < num_elements; n++)
+      {
+        if (rev_endian)
+          for (unsigned int m = 0; m < size; m++)
+            std::memcpy(buffer + size - 1 - m, data_raw + n * size + m, 1);
+        else
+          std::memcpy(buffer, data_raw + n * size, size);
+        double_array(n) = *reinterpret_cast<double *>(buffer);
+      }
+
+      // Free buffer
+      delete[] buffer;
+  }
+  
+  
+  return;
+}
+
+//--------------------------------------------------------------------------------------------------
+
+// Function to initialize 8-byte floating point array dataset from HDF5
+// Inputs:
+//   datatype_raw: raw datatype description
+//   dataspace_raw: raw dataspace description
+//   data_raw: raw data
+// Outputs:
+//   double_array: array allocated (if not already allocated) and set
+// Notes:
+//   Must have datatype version 1.
+//   Must be standard 8-byte doubles.
+//   Must be run on little-endian machine.
+void MCReader::SetHDF5DoubleArray(const unsigned char *datatype_raw,
+    const unsigned char *dataspace_raw, const unsigned char *data_raw, Array<float> &float_array)
+{
+ // Check datatype version and class
+  int offset = 0;
+  unsigned char version_class = datatype_raw[offset++];
+  if (version_class >> 4 != 1)
+    throw BlacklightException("Unexpected HDF5 datatype version.");
+  if ((version_class & 0b00001111) != 1)
+    throw BlacklightException("Unexpected HDF5 datatype class.");
+
+  // Read datatype metadata
+  unsigned char class_1 = datatype_raw[offset++];
+  unsigned char class_2 = datatype_raw[offset++];
+  offset++;
+
+  // Read data size
+  unsigned int size;
+  std::memcpy(&size, datatype_raw + offset, 4);
+  offset += 4;
+  if (size != 8){
+    throw BlacklightException("Unexpected double size.");
+  }
+  // Check properties
+  bool rev_endian = class_1 & 0b00000001;
+  if (class_1 & 0b01000000)
+    throw BlacklightException("Unexpected HDF5 floating-point byte order.");
+  if (class_1 & 0b00001110)
+    throw BlacklightException("Unexpected HDF5 floating-point padding.");
+  if ((class_1 & 0b00110000) != 0b00100000)
+    throw BlacklightException("Unexpected HDF5 floating-point mantissa normalization.");
+  unsigned short int bit_offset, bit_precision;
+  unsigned char exp_loc, exp_size, man_loc, man_size;
+  unsigned int exp_bias;
+  std::memcpy(&bit_offset, datatype_raw + offset, 2);
+  offset += 2;
+  std::memcpy(&bit_precision, datatype_raw + offset, 2);
+  offset += 2;
+  std::memcpy(&exp_loc, datatype_raw + offset++, 1);
+  std::memcpy(&exp_size, datatype_raw + offset++, 1);
+  std::memcpy(&man_loc, datatype_raw + offset++, 1);
+  std::memcpy(&man_size, datatype_raw + offset++, 1);
+  std::memcpy(&exp_bias, datatype_raw + offset, 4);
+  offset += 4;
+  if (class_2 != 63 or bit_offset != 0 or bit_precision != 64 or exp_loc != 52 or exp_size != 11
+      or man_loc != 0 or man_size != 52 or exp_bias != 1023)
+    throw BlacklightException("Unexpected HDF5 double-precision floating-point bit layout.");
+
+  // Read dimensions
+  unsigned long int *dims;
+  int num_dims;
+  ReadHDF5DataspaceDims(dataspace_raw, &dims, &num_dims);
+  unsigned int num_elements = 1;
+  for (int n = 0; n < num_dims; n++)
+    num_elements *= static_cast<unsigned int>(dims[n]);
+
+  // Allocate array
+  if (num_dims == 0)
+  {
+    if (not float_array.allocated)
+      float_array.Allocate(1);
+    else if (static_cast<unsigned int>(float_array.n_tot) != num_elements)
+      throw BlacklightException("Array dimension mismatch.");
+  }
+  else if (num_dims == 4)
+  {
+    if (not float_array.allocated)
+      float_array.Allocate(static_cast<int>(dims[0]), static_cast<int>(dims[1]),
+          static_cast<int>(dims[2]), static_cast<int>(dims[3]));
+    else if (static_cast<unsigned long int>(float_array.n4) != dims[0]
+        or static_cast<unsigned long int>(float_array.n3) != dims[1]
+        or static_cast<unsigned long int>(float_array.n2) != dims[2]
+        or static_cast<unsigned long int>(float_array.n1) != dims[3]
+        or static_cast<unsigned int>(float_array.n_tot) != num_elements)
+      throw BlacklightException("Array dimension mismatch.");
+  }
+  else if (num_dims == 5)
+  {
+    if (not float_array.allocated)
+      float_array.Allocate(static_cast<int>(dims[0]), static_cast<int>(dims[1]),
+          static_cast<int>(dims[2]), static_cast<int>(dims[3]), static_cast<int>(dims[4]));
+    else if (static_cast<unsigned long int>(float_array.n5) != dims[0]
+        or static_cast<unsigned long int>(float_array.n4) != dims[1]
+        or static_cast<unsigned long int>(float_array.n3) != dims[2]
+        or static_cast<unsigned long int>(float_array.n2) != dims[3]
+        or static_cast<unsigned long int>(float_array.n1) != dims[4]
+        or static_cast<unsigned int>(float_array.n_tot) != num_elements)
+      throw BlacklightException("Array dimension mismatch.");
+  }
+  else
+    throw BlacklightException("Unexpected HDF5 floating-point array size.");
+  delete[] dims;
+
+  // Work in parallel
+  #pragma omp parallel
+  {
+    // Allocate buffer
+    char *buffer = new char[size];
+
+    // Initialize array
+    #pragma omp for schedule(static)
+    for (unsigned int n = 0; n < num_elements; n++)
+    {
+      if (rev_endian)
+        for (unsigned int m = 0; m < size; m++)
+          std::memcpy(buffer + size - 1 - m, data_raw + n * size + m, 1);
+      else
+        std::memcpy(buffer, data_raw + n * size, size);
+      float_array(n) = static_cast<double>(*reinterpret_cast<double *>(buffer));
+    }
+
+    // Free buffer
+    delete[] buffer;
+  }
   return;
 }
