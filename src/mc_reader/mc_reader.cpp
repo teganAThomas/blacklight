@@ -39,7 +39,7 @@ MCReader::MCReader(const InputReader *p_input_reader_, const SimulationReader *p
   // Copy general input data
   model_type = p_input_reader->model_type.value();
   mc_input = p_input_reader->mc_input.value();
-  
+
   if(mc_input){
     mc_file_name = p_input_reader->mc_file.value();
     mc_freq_file_name = p_input_reader->mc_freq_file.value();
@@ -49,7 +49,7 @@ MCReader::MCReader(const InputReader *p_input_reader_, const SimulationReader *p
     compton = p_input_reader->compton.value();
     stimulated_compton = p_input_reader->stimulated_compton.value();
     mc_error = p_input_reader->mc_error.value();
-  
+
     if(simulation_all_cgs){
       simulation_rho_cgs = 1.0;
       simulation_r_rg = Physics::c*Physics::c/(simulation_m_msun*Physics::gg_msun);
@@ -112,7 +112,7 @@ MCReader::~MCReader()
     delete[] dataset_names;
   if (num_variable_names > 0)
     delete[] variable_names;
-  
+
   if (scattering_source_terms != nullptr)
   {
     scattering_source_terms[0].Deallocate();
@@ -152,7 +152,7 @@ double MCReader::Read(int snapshot)
   ReadFreqFile();
   dlf = std::log10(freq_grid(1))-std::log10(freq_grid(0));
   std::cout<<"finished reading freq file "<<std::endl;
-  
+
   std::printf("full read frequency file time: %f ",omp_get_wtime()-time_start);
   double time_counter = omp_get_wtime();
   // Open input file
@@ -166,7 +166,7 @@ double MCReader::Read(int snapshot)
     {
       throw BlacklightException("Reading MC files is only implemented for Athena++ formats.");
     }
-  
+
 
   // Read coordinates
   if (first_time)
@@ -175,7 +175,7 @@ double MCReader::Read(int snapshot)
         data_stream = std::ifstream(mc_file_name,std::ios_base::in|std::ios_base::binary);
         if (not data_stream.is_open())
               throw BlacklightException("Could not open file for reading.");
-        
+
         ReadHDF5Superblock();
         root_data_segment_address = ReadHDF5Heap(root_name_heap_address);
         ReadHDF5RootObjectHeader();
@@ -243,7 +243,7 @@ double MCReader::Read(int snapshot)
         std::printf("set true scale and compare: %f ",omp_get_wtime()-time_counter);
         time_counter = omp_get_wtime();
         std::cout<<"finished coord check "<<std::endl;
-    } 
+    }
 
     Array<float> *scattering;
     scattering = new Array<float>[1];
@@ -251,13 +251,13 @@ double MCReader::Read(int snapshot)
     scattering_first_derivs = new Array<float>[1];
     Array<float> *scattering_second_derivs;
     scattering_second_derivs = new Array<float>[1];
-    
+
     if (first_time)
       {
         int n5 = num_freqs;
         int n4 = levels.n1;
-        int n3 = x3v.n1; 
-        int n2 = x2v.n1; 
+        int n3 = x3v.n1;
+        int n2 = x2v.n1;
         int n1 = x1v.n1;
         if(mc_error){
           scattering[0].Allocate(2*n5,n4, n3, n2, n1);
@@ -265,7 +265,7 @@ double MCReader::Read(int snapshot)
           scattering[0].Allocate(n5,n4, n3, n2, n1);
         }
         if(compton){
-          
+
           if(mc_error){
             scattering_first_derivs[0].Allocate(2*n5,n4, n3, n2, n1);
             scattering_second_derivs[0].Allocate(2*n5,n4, n3, n2, n1);
@@ -282,7 +282,7 @@ double MCReader::Read(int snapshot)
         //TEGAN: I should be doing a like if mc_error statment here
         scattering_error[0].Allocate(n5,n4,n3,n2,n1);
       }
-      
+
         std::printf("allocate arrays time: %f ",omp_get_wtime()-time_counter);
         time_counter = omp_get_wtime();
         std::cout<<"finish allocat "<<std::endl;
@@ -302,14 +302,14 @@ double MCReader::Read(int snapshot)
         ReadHDF5DoubleArray("mcscat",shallow_scatter);
       }
       std::cout<<"finished reading float"<<std::endl;
-      
+
         std::printf("read mc scattering: %f ",omp_get_wtime()-time_counter);
         time_counter = omp_get_wtime();
       if(compton){
         Gradient(shallow_first_deriv, shallow_scatter, ln_freq_grid);
         Gradient(shallow_second_deriv, shallow_first_deriv, ln_freq_grid);
       }
-      
+
         std::printf("compute gradient time: %f ",omp_get_wtime()-time_counter);
         time_counter = omp_get_wtime();
         std::cout<<"before calc source"<<std::endl;
@@ -319,10 +319,10 @@ double MCReader::Read(int snapshot)
         std::printf("calc source term time: %f ",omp_get_wtime()-time_counter);
         time_counter = omp_get_wtime();
     std::cout<<"finsiehd calc source term"<<std::endl;
-    
+
     // Close input file
     data_stream.close();
-    
+
     scattering[0].Deallocate();
     delete[] scattering;
 
@@ -331,8 +331,8 @@ double MCReader::Read(int snapshot)
 
     scattering_second_derivs[0].Deallocate();
     delete[] scattering_second_derivs;
-    
-    
+
+
     // Update first time flag
     first_time = false;
 
@@ -361,7 +361,7 @@ void MCReader::ReadFreqFile()
     throw BlacklightException(msg.str().c_str());
   }
   std::printf("reading freq file! \n");
-  
+
   fscanf(mc_freq_file,"%d",&(num_freqs));
 
 
@@ -387,7 +387,7 @@ void MCReader::ReadFreqFile()
 
 //--------------------------------------------------------------------------------------------------
 
-// Function for evaluating the gradient of f over x 
+// Function for evaluating the gradient of f over x
 // Used specifically to calculate the gradient of J over frequency for the Compton source term
 void MCReader::Gradient(Array<float> &grad, Array<float> &f, Array<double> &x){
   int nx = x.n1;
@@ -454,13 +454,13 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
                 scattering_error(l,b,k,j,i) = 0.0;
               }else{
                 source_term(l,b,k,j,i) = scattering(l,b,k,j,i);
-                if(mc_error){  
+                if(mc_error){
                 scattering_error(l,b,k,j,i) = scattering(l+source_term.n5,b,k,j,i);
                 }else{
                   scattering_error(l,b,k,j,i) = 0.0;
                 }
               }
-              
+
               scattering_error(l,b,k,j,i) *= scattering_error(l,b,k,j,i);
             }
           }
@@ -481,7 +481,7 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
           double theta_e;
             rho_cgs = simulation_rho_cgs*grid_prim[0](ind_rho,b,k,j,i);
             pgas_cgs = e_unit*grid_prim[0](p_simulation_reader->ind_pgas,b,k,j,i);
-            
+
             // Calculate electron temperature for model with T_i/T_e a function of beta (E1 1)
             kb_tt_e_cgs = std::numeric_limits<double>::quiet_NaN();
             theta_e = std::numeric_limits<double>::quiet_NaN();
@@ -545,7 +545,7 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
               double tti_tte = (plasma_rat_high + plasma_rat_low * beta_inv * beta_inv)
                   / (1.0 + beta_inv * beta_inv);
               double kb_tt_tot_cgs = plasma_mu * Physics::m_p * pgas_cgs / rho_cgs;
-              
+
               if (plasma_use_p)
                 kb_tt_e_cgs = (1.0 + plasma_ne_ni) / (tti_tte + plasma_ne_ni) * kb_tt_tot_cgs;
               else
@@ -553,7 +553,7 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
                 kb_tt_e_cgs = (1.0 + plasma_ne_ni) * kb_tt_tot_cgs / (plasma_gamma - 1.0);
                 kb_tt_e_cgs /= tti_tte / (plasma_gamma_i - 1.0) + plasma_ne_ni / (plasma_gamma_e - 1.0);
               }
-              
+
               theta_e = kb_tt_e_cgs / (Physics::m_e * Physics::c * Physics::c);
             }
             if(plasma_thermal_frac!=0.0 and plasma_model == PlasmaModel::one_temp)
@@ -564,9 +564,9 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
               }else{
                 kb_tt_tot_cgs = plasma_mu * Physics::m_p *pgas_cgs / rho_cgs;
               }
-              
+
               kb_tt_e_cgs = kb_tt_tot_cgs;
-              
+
               theta_e = kb_tt_e_cgs / (Physics::m_e * Physics::c * Physics::c);
 
             }
@@ -579,22 +579,22 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
               theta_e = 1.0 / 5.0 * (std::sqrt(1.0 + 25.0 * rho_kappa_e_cbrt * rho_kappa_e_cbrt) - 1.0);
               kb_tt_e_cgs = theta_e * Physics::m_e * Physics::c * Physics::c;
             }
-          
-          
+
+
           for(int l=0;l<source_term.n5;l++){
             //calculate frequency dependent compton source term
             double x = Physics::h*freq_grid(l)/(Physics::m_e*Physics::c*Physics::c);
-            
+
            /* if(scattering(l,b,k,j,i)<0.0 || scattering(std::max(l-1,0),b,k,j,i)<0.0 || scattering(std::min(l+1,source_term.n5-1),b,k,j,i)<0.0){
               source_term(l,b,k,j,i) = 0.0;
               scattering_error(l,b,k,j,i) = 0.0;
             }else{*/
-            if(!std::isnan(source_term(l,b,k,j,i)) && source_term(l,b,k,j,i)>0.0){
+            if(!std::isnan(scattering(l,b,k,j,i)) && scattering(l,b,k,j,i)>0.0){
               source_term(l,b,k,j,i) = (1-x)*scattering(l,b,k,j,i)+ (x-3*theta_e)*scattering_prime(l,b,k,j,i)+theta_e*scattering_prime_prime(l,b,k,j,i);
               /*double sigma_prime = scattering(l+source_term.n5+1,b,k,j,i)/std::pow((ln_freq_grid(l+1)-ln_freq_grid(l-1)),2.) + scattering(l+source_term.n5-1,b,k,j,i)/std::pow((ln_freq_grid(l+1)-ln_freq_grid(l-1)),2.);
               double sigma_prime_minus = scattering(l+source_term.n5,b,k,j,i)/std::pow((ln_freq_grid(l)-ln_freq_grid(l-2)),2.) + scattering(l+source_term.n5-2,b,k,j,i)/std::pow((ln_freq_grid(l)-ln_freq_grid(l-2)),2.);
               double sigma_prime_plus = scattering(l+source_term.n5+2,b,k,j,i)/std::pow((ln_freq_grid(l+2)-ln_freq_grid(l)),2.) + scattering(l+source_term.n5,b,k,j,i)/std::pow((ln_freq_grid(l+2)-ln_freq_grid(l)),2.);
-              
+
               double sigma_prime_prime = sigma_prime_plus/std::pow((ln_freq_grid(l+1)-ln_freq_grid(l-1)),2.) + sigma_prime_minus/std::pow((ln_freq_grid(l+1)-ln_freq_grid(l-1)),2.);
               */
               //Note: scattering_error's here are directly computed as variances
@@ -622,7 +622,7 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
                 scattering_error(l,b,k,j,i) = 0.0;
                 //there doesn't seem to be a particular frequency that gets more negatives than others just by simple look at print
                //std::printf("negative source terms: %.3e error: %.3e source term minus 1: %.3e freq: %d",scattering(l,b,k,j,i),scattering(l+source_term.n5,b,k,j,i),scattering(l-1,b,k,j,i),l);
-              
+
               }*/
            // }
               /*if(source_term(l,b,k,j,i)<0.0 && scattering(l,b,k,j,i)<0.0){
@@ -640,11 +640,11 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
 
                 std::printf("scattering negative!: %.3e ",scattering(l,b,k,j,i));
               }*/
-              
-            
+
+
             //turn standard deviation to variance. this will be used up until integration
             //scattering_error(l,b,k,j,i) *= scattering_error(l,b,k,j,i);
-            
+
           }
         }
       }
