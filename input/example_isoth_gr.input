@@ -17,7 +17,7 @@ checkpoint_sample_file   = data/sample.dat
 
 # Simulation parameters
 simulation_format       = athena           # format of GRMHD data
-simulation_file         = /PellaShared/kcu8rf/sks_ring_ff/isothgr.out2.00000.athdf # file containing data dump
+simulation_file         = /PellaShared/kcu8rf/blacklight/data/sks_ring_ff/isothgr.out2.00000.athdf # file containing data dump
 simulation_multiple     = false            # flag for processing multiple files
 simulation_coord        = sks              # simulation coordinates (sks, cks), if i set it to cks then everything is just NaNs
 simulation_a            = 0.0              # dimensionless black hole spin

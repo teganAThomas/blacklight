@@ -1,0 +1,70 @@
+<comment>
+problem   =  isothermal atmosphere
+reference =
+configure = --prob=mc_isoth -mc --coord=spherical_polar
+
+<job>
+problem_id = isoth   # problem ID: basename of output filenames
+
+<output1>
+file_type = phlist
+
+#<output2>
+#file_type = hdf5
+#variable = mcscat
+
+#<output3>
+#file_type = hdf5
+#variable = mclab
+
+<output2>
+file_type = hdf5
+variable = prim
+
+<mesh>
+nx1        = 128       # Number of zones in X1-direction
+x1min      = 9.99e10       # minimum value of X1
+x1max      = 1.0e11      # maximum value of X1
+ix1_mc_bc  = absorb  # inner-X1 boundary flag
+ox1_mc_bc  = escape  # outer-X1 boundary flag
+
+nx2        = 64         # Number of zones in X2-direction
+x2min      = 0.      # minimum value of X2
+x2max      = 3.1415926      	      # maximum value of X2
+ix2_mc_bc  = polar  # inner-X2 boundary flag
+ox2_mc_bc  = polar  # outer-X2 boundary flag
+
+nx3        = 64         # Number of zones in X3-direction
+x3min      = 0.0        # minimum value of X3
+x3max      =  6.2831854      	       # maximum value of X3
+ix3_mc_bc  = periodic  # inner-X3 boundary flag
+ox3_mc_bc  = periodic  # outer-X3 boundary flag
+
+<hydro>
+gamma = 1.666666666666667 # gamma = C_p/C_v
+
+<meshblock>
+nx1 = 128
+nx2 = 8
+nx3 = 8
+
+<montecarlo>
+nphot     = 10
+iseed     = 121500
+scattering = none
+emission   = freefree
+absorption = freefree
+polarized = false
+
+
+<problem>
+temp     = 1.0e6       # isothermal temperature
+taumin   = 1.0e-1
+taumax   = 1.0e8
+constdens = true
+dens = 1.e-5
+radial = true
+tnorm   = true
+emin = 0.01
+emax = 1000.
+
