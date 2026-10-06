@@ -747,9 +747,11 @@ void RadiationIntegrator::SampleSimulation()
         sample_bb2[adaptive_level](m,n) = fallback_bb2;
         sample_bb3[adaptive_level](m,n) = fallback_bb3;
         if(mc_input){
-          sample_scattering[adaptive_level](m,n) = 0.0;
+          for(int l=0; l<mc_num_freqs;l++){
+          sample_scattering[adaptive_level](m,n,l) = 0.0;
           if(mc_error)
-            sample_scattering_err[adaptive_level](m,n) = 0.0;
+            sample_scattering_err[adaptive_level](m,n,l) = 0.0;
+          }
         }
       }
 

@@ -19,7 +19,7 @@ checkpoint_sample_file   = data/sample.dat
 simulation_format       = athena           # format of GRMHD data
 simulation_file         = /PellaShared/kcu8rf/spherical_ring_ff/isoth.out2.00000.athdf # file containing data dump
 simulation_multiple     = false            # flag for processing multiple files
-simulation_coord        = sks              # simulation coordinates (sks, cks), if i set it to cks then everything is just NaNs
+simulation_coord        = spm              # simulation coordinates (sks, cks), if i set it to cks then everything is just NaNs
 simulation_a            = 0.0              # dimensionless black hole spin
 simulation_m_msun       = 677019          # black hole mass in solar masses. this particular mass makes 1rg = 1e11 cm
 simulation_all_cgs      = true
@@ -50,7 +50,7 @@ camera_k_r        = 1.0    # covariant KS r-momentum of photons
 camera_k_th       = 0.0    # covariant KS theta-momentum of photons (using radians)
 camera_k_ph       = 0.0    # covariant KS phi-momentum of photons (using radians)
 camera_rotation   = 0.0    # rotation of camera in degrees (0/90 for north up/left)
-camera_width      = 2.0   # full width of image in gravitational units
+camera_width      = 2.5   # full width of image in gravitational units
 camera_resolution = 32     # number of pixels per side
 
 # Ray-tracing parameters
@@ -58,7 +58,7 @@ ray_flat        = true         # flag indicating ray tracing should assume flat 
 ray_terminate   = absolute # termination condition (photon, multiplicative, additive)
 ray_factor      = 1e-13          # constant for terminate (only used for ray_terminate != photon)
 ray_integrator  = dp              # time integrator for geodesics (dp, rk4, rk2)
-ray_step        = 0.0005            # step size control relative to radial coordinate
+ray_step        = 0.0002            # step size control relative to radial coordinate
 ray_max_steps   = 1000000            # maximum number of steps allowed for each geodesic
 ray_max_retries = 20              # maximum number of times a step can fail (dp)
 ray_tol_abs     = 1.0e-8          # absolute tolerance for taking full steps (dp)

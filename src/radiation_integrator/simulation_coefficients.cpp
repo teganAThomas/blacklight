@@ -599,9 +599,7 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
               mid = low - 1;
             }
 
-            //TEGAN:why am i doing it over log10???
             // If the frequency is outside the range of the MC frequencies + delta_nu, then default to no scattering
-            
             if (mid==0 && (std::log10(nu_cgs)+mc_dlf)<std::log10(mc_freqs(mid))){
               scattering = 0.0;
 
@@ -611,9 +609,6 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
 
               scattering_error = 0.0;
             }else{
-              //if(image_frequencies(l)>2.5e18){
-              //  std::printf("nu_fluid_cgs = %.5e, mid = %d, mc_freqs(mid) = %.5e, mc_dlf = %.5e\n", nu_cgs, mid, mc_freqs(mid), mc_dlf);
-              //}
               //perform linear interpolation in linear-log space to find scattering value at nu_cgs
               if(std::log10(mc_freqs(mid))==std::log10(nu_cgs) || mid==0 || mid==mc_num_freqs-1){
                 scattering = sample_scattering[adaptive_level](m,n,mid)*Physics::sigma_t*n_e_cgs/(nu_cgs*nu_cgs);
@@ -638,19 +633,19 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
 
                 if(mc_error) scattering_error = sample_scattering_err[adaptive_level](m,n,mid-1)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid-1)*mc_freqs(mid-1)))*(log_nu_high-std::log10(nu_cgs))/(log_nu_high-log_nu_low),2.) + sample_scattering_err[adaptive_level](m,n,mid)*std::pow((Physics::sigma_t*n_e_cgs/(mc_freqs(mid)*mc_freqs(mid)))* (std::log10(nu_cgs) - log_nu_low) / (log_nu_high - log_nu_low),2.);
               }
-             /* scattering = sample_scattering[adaptive_level](m,n,mid)*Physics::sigma_t*n_e_cgs/(nu_cgs*nu_cgs);
-
-              if(mc_error) scattering_error = sample_scattering_err[adaptive_level](m,n,mid)*std::pow(Physics::sigma_t*n_e_cgs/(nu_cgs*nu_cgs),2.);
-              */
             }
 
             //Calculate emissivity and absorptivity due to scattering
-            
-            
-            //need to include this if statement as some cells may not be visited at all and shouldn't get absorption there bc would be unfair???
-            if(rho_cgs!=0.0){
+            //need to include this if statement as we don't want to lie and add scattering in regions outside the sim. domain
+            //NOTE THAT IF THE VALUE NATURALLY OCCURS IN YOUR DOMAIN AND ISN'T 0 THIS COULD BE PROBLEMATIC
+            if(rho_cgs!=fallback_rho){
               double x = Physics::h*nu_cgs/(Physics::m_e*Physics::c*Physics::c);
-              alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs*(1.-2.0*x);
+              if(compton){
+                alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs*(1.-2.0*x);
+              }else{
+                alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs;
+              }
+              //scattering already has the nu_cgs^-2 factored in 
               j_i[adaptive_level](l,m,n) += scattering;
               if(mc_error) scat_err[adaptive_level](l,m,n) += scattering_error;
             }
@@ -755,17 +750,6 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
            //std::printf("j coeff cgs: %e\n", partA*partB*std::sqrt(kb_tt_e_cgs/Physics::k_b));
 
            double coefficient = partA*partB*n_e_cgs*n_i_cgs*std::exp(-Physics::h*nu_cgs/kb_tt_e_cgs)*gaunt_factor;
-          /* if(n_e_cgs!=0.0){
-            printf("T: %.3e rho: %.3e ",kb_tt_e_cgs/Physics::k_b,rho_cgs);
-           }*/
-           /*double tempx1 = sample_pos[adaptive_level](m,n,1);
-           double tempx2 = sample_pos[adaptive_level](m,n,2);
-           double tempx3 = sample_pos[adaptive_level](m,n,3);
-           ConvertFromCKS(&tempx1, &tempx2, &tempx3);
-           std::ofstream kTFile;
-           kTFile.open("./medianVSmean.csv", std::ios_base::app);
-           kTFile<<kb_tt_e_cgs<<","<<nu_cgs<<","<<coefficient<<std::endl;
-           kTFile.close();*/
             if (image_light or image_emission or image_emission_ave)
               j_i[adaptive_level](l,m,n) += coefficient/(nu_cgs*nu_cgs);
 
@@ -802,11 +786,11 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
                 and 1.0 / (alpha_i[adaptive_level](l,m,n) * alpha_i[adaptive_level](l,m,n))
                 == std::numeric_limits<double>::infinity())
             {
-              alpha_i[adaptive_level](l,m,n) += 0.0;
+              alpha_i[adaptive_level](l,m,n) = 0.0;
               if (image_light and image_polarization)
               {
-                alpha_q[adaptive_level](l,m,n) += 0.0;
-                alpha_v[adaptive_level](l,m,n) += 0.0;
+                alpha_q[adaptive_level](l,m,n) = 0.0;
+                alpha_v[adaptive_level](l,m,n) = 0.0;
               }
             }
           }

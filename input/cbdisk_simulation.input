@@ -4,7 +4,7 @@ num_threads = 12           # number of threads to use in parallel
 
 # Output parameters
 output_format = npz                            # format of output file (npz, npy, raw)
-output_file   = output/cbdisk/ff_tabular/r3200_w1000_inc5.npz  # file to be (over)written with output data
+output_file   = output/cbdisk/ff_tabular/r3200_w1000_inc5_ff.npz  # file to be (over)written with output data
 output_camera = false                          # flag for saving camera details
 
 # Checkpoint parameters
@@ -32,7 +32,7 @@ simulation_mc_temp = true
 simulation_athenak_vars = false
 
 #opacity table parameters
-opacity_table = true
+opacity_table = false
 opacity_file = data/out_opacity_table_nfreq64.txt
 
 mc_input = false

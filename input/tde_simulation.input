@@ -4,7 +4,7 @@ num_threads = 8           # number of threads to use in parallel
 
 # Output parameters
 output_format = npz                            # format of output file (npz, npy, raw)
-output_file   = output/xiaoshan_r1200_w400_pinhole_tde1020_inc90_opacTable.npz  # file to be (over)written with output data
+output_file   = output/xiaoshan_r1200_w400_pinhole_tde_inc90_ffopacTable.npz  # file to be (over)written with output data
 output_camera = false                          # flag for saving camera details
 
 # Checkpoint parameters
@@ -16,25 +16,32 @@ checkpoint_sample_load   = false  # flag indicating simulation sampling should b
 
 # Simulation parameters
 simulation_format       = athena           # format of GRMHD data
-simulation_file         = data/xiaoshan.tde.out1.01020.athdf  # file containing data dump
+simulation_file         = /PellaShared/swd8g/mc_tde/tegan/xiaoshan1.9.26/ff01/mctde.out4.00000.athdf  # file containing data dump
 simulation_multiple     = false            # flag for processing multiple files
 simulation_coord        = sks              # simulation coordinates (sks, cks), if i set it to cks then everything is just NaNs
 simulation_a            = 0.0              # dimensionless black hole spin
 simulation_m_msun       = 3.0e6          # black hole mass in solar masses
+simulation_all_cgs      = false
 simulation_rho_cgs      = 1.0e-8          # unit code density in g/cm^3
-simulation_v_cgs        = 5.0e-4             # unit code v0
+simulation_v_c          = 5.0e-4             # unit code v0
 simulation_r_rg         = 2.0              # flag indicating r_g/simulation r_units. for r_g it would be 1 and for r_s it would be 2.
 simulation_interp       = false             # flag indicating interpolation should be used
 simulation_block_interp = false            # flag indicating interpolation should cross blocks 
 simulation_hd_only = true 
+simulation_mc_temp = true
+simulation_athenak_vars = false
 
 #opacity table parameters
 opacity_table = true
-opacity_file = data/out_opacity_table_nfreq64.txt
+opacity_file = data/ff_replaced_opacity_table.txt
 
 
 mc_input = false
 mc_file = random.txt
+mc_freq_file = data/thomsonFrequencies.txt
+compton = false
+stimulated_compton = false
+mc_error = false
 
 
 # Camera parameters
@@ -78,9 +85,12 @@ image_length          = false     # flag for producing image of geodesic lengths
 image_lambda          = false     # flag for producing image of affine path lengths
 image_emission        = true     # flag for producing image of emission coefficients
 image_tau             = true     # flag for producing image of optical depths
-image_lambda_ave      = false     # flag for producing lambda-averaged images
-image_emission_ave    = false     # flag for producing emission-averaged images
-image_tau_int         = false     # flag for producing tau-integrated images
+image_mcscat          = false
+image_mcscat_ave      = false
+image_lambda_ave      = true     # flag for producing lambda-averaged images
+image_emission_ave    = false    # flag for producing emission-averaged images
+image_tau_int         = false    # flag for producing tau-integrated images
+image_photosphere_int = true
 image_crossings       = false     # flag for counting plane crossings of geodesics
 image_free_free       = true  # flag for specifying whether to include free-free emission terms
 image_scattering      = false     # flag for specifying whether to include compton scattering
