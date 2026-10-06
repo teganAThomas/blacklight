@@ -58,10 +58,22 @@ REDSHIFT=(
     6.0
 )
 
+YMIN=(
+    1e35
+    1e30
+    1e30
+)
+
+YMAX=(
+    1e45
+    1e35
+    1e40
+)
+
 mkdir -p "$LOG_DIR" "$FALLBACK_OUTPUT_DIR"
 
-if [[ ${#TEMPERATURES[@]} -ne ${#INPUTS[@]} || ${#RADII[@]} -ne ${#INPUTS[@]} || ${#REDSHIFT[@]} -ne ${#INPUTS[@]} ]]; then
-    echo "Error: TEMPERATURES, RADII, and REDSHIFT must each have exactly one entry per INPUTS entry."
+if [[ ${#TEMPERATURES[@]} -ne ${#INPUTS[@]} || ${#RADII[@]} -ne ${#INPUTS[@]} || ${#REDSHIFT[@]} -ne ${#INPUTS[@]} || ${#YMIN[@]} -ne ${#INPUTS[@]}|| ${#YMAX[@]} -ne ${#INPUTS[@]} ]]; then
+    echo "Error: TEMPERATURES, RADII, REDSHIFT, and YLIM must each have exactly one entry per INPUTS entry."
     exit 1
 fi
 
@@ -103,6 +115,8 @@ for i in "${!INPUTS[@]}"; do
     temperature="${TEMPERATURES[$i]}"
     radius="${RADII[$i]}"
     redshift="${REDSHIFT[$i]}"
+    ymin="${YMIN[$i]}"
+    ymax="${YMAX[$i]}"
     input_path="${INPUT_DIR}${input}"
     base="${input%.input}"
     log_file="${LOG_DIR}/${base}.log"
@@ -150,7 +164,7 @@ for i in "${!INPUTS[@]}"; do
 
     plot_output="$(dirname "$image_path")/${base}_spectrum.png"
     plot_args=(--image "$image_path" --output "$plot_output" --label "$base" \
-                --temperature "$temperature" --radius "$radius" --redshift_re "$redshift")
+                --temperature "$temperature" --radius "$radius" --redshift_re "$redshift" --ylim "$ymin" "$ymax")
 
     # Use the MC overlay for all cases, with the directory taken from this
     # input file's simulation_file line (simulation_file points at a data
