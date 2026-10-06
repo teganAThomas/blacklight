@@ -184,12 +184,22 @@ double MCReader::Read(int snapshot)
 
         ReadHDF5IntArray("Levels", levels);
 
-        ReadHDF5FloatArray("x1f", x1f);
-        ReadHDF5FloatArray("x2f", x2f);
-        ReadHDF5FloatArray("x3f", x3f);
-        ReadHDF5FloatArray("x1v", x1v);
-        ReadHDF5FloatArray("x2v", x2v);
-        ReadHDF5FloatArray("x3v", x3v);
+        try{
+          ReadHDF5FloatArray("x1f", x1f);
+          ReadHDF5FloatArray("x2f", x2f);
+          ReadHDF5FloatArray("x3f", x3f);
+          ReadHDF5FloatArray("x1v", x1v);
+          ReadHDF5FloatArray("x2v", x2v);
+          ReadHDF5FloatArray("x3v", x3v);
+        }catch (BlacklightException e){
+          std::printf("Attempting to read MC coordinates as double precision.\n");
+          ReadHDF5DoubleArray("x1f", x1f);
+          ReadHDF5DoubleArray("x2f", x2f);
+          ReadHDF5DoubleArray("x3f", x3f);
+          ReadHDF5DoubleArray("x1v", x1v);
+          ReadHDF5DoubleArray("x2v", x2v);
+          ReadHDF5DoubleArray("x3v", x3v);
+        }
 
 
         std::printf("read coordinate time: %f ",omp_get_wtime()-time_counter);
@@ -285,7 +295,12 @@ double MCReader::Read(int snapshot)
       //TEGAN: i'm not sure if i have to do this sort of copying, but just doing it for now
       //come back later to check
       std::cout<<"before reading float"<<std::endl;
-      ReadHDF5FloatArray("mcscat",shallow_scatter);
+      try{
+        ReadHDF5FloatArray("mcscat",shallow_scatter);
+      }catch (BlacklightException e){
+        std::printf("Attempting to read MC scattering as double precision.\n");
+        ReadHDF5DoubleArray("mcscat",shallow_scatter);
+      }
       std::cout<<"finished reading float"<<std::endl;
 
         std::printf("read mc scattering: %f ",omp_get_wtime()-time_counter);

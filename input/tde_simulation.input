@@ -47,7 +47,7 @@ mc_error = false
 # Camera parameters
 camera_type       = pinhole  # type of camera (plane, pinhole)
 camera_r          = 1200.0  # KS radial coordinate r in gravitational units
-camera_th         = 90.0   # KS polar coordinate theta in degrees (0/180 for N/S)
+camera_th         = 0.0   # KS polar coordinate theta in degrees (0/180 for N/S)
 camera_ph         = 0.0    # KS azimuthal coordinate phi in degrees
 camera_urn        = 0.0    # contravariant KS normal r-velocity
 camera_uthn       = 0.0    # contravariant KS normal theta-velocity (using radians)
