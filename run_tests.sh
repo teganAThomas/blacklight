@@ -33,7 +33,8 @@ FALLBACK_OUTPUT_DIR="./tests"
 INPUTS=(
     "example_isoth.input"
     "example_isoth_gr.input"
-    "example_mc_isoth_gr.input"
+    "example_mc_thom_isoth_gr.input"
+    "example_mc_comp_isoth_gr.input"
 )
 
 # Blackbody temperature (K) and radius (cm) for each case, passed through to
@@ -43,9 +44,11 @@ TEMPERATURES=(
     1e6
     1e6
     1e7
+    1e7
 )
 RADII=(
     1e11
+    8859750.2283
     8859750.2283
     8859750.2283
 )
@@ -56,10 +59,12 @@ REDSHIFT=(
     0.0
     6.0
     6.0
+    6.0
 )
 
 YMIN=(
     1e35
+    1e30
     1e30
     1e30
 )
@@ -67,6 +72,7 @@ YMIN=(
 YMAX=(
     1e45
     1e35
+    1e40
     1e40
 )
 

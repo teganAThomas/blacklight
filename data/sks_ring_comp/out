@@ -1,0 +1,12 @@
+Creating table for Compton cross section.
+
+Setup complete, entering main loop...
+
+cycle=0 time=0.0000000000000000e+00 dt=4.9254909476412664e-05
+Emission array range (min, max), total: 5.3110504817916729e+38 2.7147536527632751e+39 1.4408701534999247e+43
+Minimum weight: 2.7147536527632749e+19
+ntot: 200000 nesc: 57602 nabs: 142398 ndes: 0 nscat/ntot: 5.8805519500000003e+02
+cycle=1 time=4.9254909476412664e-05 dt=4.9254909476412664e-05
+
+cpu time used  = 2.1958873800000001e+02
+samples/cpu_second = 9.1079351806640625e+02

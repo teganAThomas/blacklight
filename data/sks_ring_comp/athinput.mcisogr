@@ -105,8 +105,8 @@ boosts    = true
 stepsize  = 0.1
 varystep = true
 nf_scat = 40
-emin_scat = 1.
-emax_scat = 10000.
+emin_scat = 10.
+emax_scat = 100000.
 
 # dens is chosen so the free-free optical depth across the shell is ~100 at the Planck
 # peak (243 eV for T = 1e6 K), which is thick enough that the emergent flux is sigma T^4
@@ -124,7 +124,7 @@ emax_scat = 10000.
 <problem>
 temp     = 1.0e7       # isothermal temperature
 constdens = true
-dens     = 3.0e-3   # g/cm^3, gives tau_ff ~ 100 at the spectral peak
+dens     = 2.0e-3   # g/cm^3, gives tau_ff ~ 100 at the spectral peak
 ambient  = 1.0         # density outside the shell, relative to the base (must be > 0)
 tnorm   = true
 emin = 0.01             
