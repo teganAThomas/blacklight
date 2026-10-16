@@ -4,7 +4,7 @@ num_threads = 8           # number of threads to use in parallel
 
 # Output parameters
 output_format = npz                            # format of output file (npz, npy, raw)
-output_file   = output/xiaoshan_r1200_w400_pinhole_tde_inc90_ffopacTable.npz  # file to be (over)written with output data
+output_file   = output/xiaoshan_tde_inc90_opacTable_rp.npz  # file to be (over)written with output data
 output_camera = false                          # flag for saving camera details
 
 # Checkpoint parameters
@@ -33,7 +33,7 @@ simulation_athenak_vars = false
 
 #opacity table parameters
 opacity_table = true
-opacity_file = data/ff_replaced_opacity_table.txt
+opacity_file = /PellaShared/kcu8rf/blacklight/data/out_opacity_table_nfreq64.txt
 
 
 mc_input = false

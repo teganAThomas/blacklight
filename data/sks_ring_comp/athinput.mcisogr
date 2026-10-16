@@ -122,7 +122,7 @@ emax_scat = 100000.
 # never be zero, since GetTemperature() would form 0/0 and the NaN poisons the emission
 # array through eta0/sqrt(0).
 <problem>
-temp     = 1.0e7       # isothermal temperature
+temp     = 3.0e7       # isothermal temperature, start with 3e7 for now but may need to go up
 constdens = true
 dens     = 2.0e-3   # g/cm^3, gives tau_ff ~ 100 at the spectral peak
 ambient  = 1.0         # density outside the shell, relative to the base (must be > 0)

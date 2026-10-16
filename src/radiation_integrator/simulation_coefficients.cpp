@@ -558,15 +558,23 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
               double xd = xi - i;
               double yd = xj - j;
               double zd = xk - k;
-              double c00 = p_opacity_table_reader->plan_tab(k,j,i)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j,i)*xd;
-              double c01 = p_opacity_table_reader->plan_tab(k,j,i+1)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j,i+1)*xd;
-              double c10 = p_opacity_table_reader->plan_tab(k,j+1,i)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j+1,i)*xd;
-              double c11 = p_opacity_table_reader->plan_tab(k,j+1,i+1)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j+1,i+1)*xd;
+              double c00 = p_opacity_table_reader->ross_tab(k,j,i)*(1 - xd) + p_opacity_table_reader->ross_tab(k+1,j,i)*xd;
+              double c01 = p_opacity_table_reader->ross_tab(k,j,i+1)*(1 - xd) + p_opacity_table_reader->ross_tab(k+1,j,i+1)*xd;
+              double c10 = p_opacity_table_reader->ross_tab(k,j+1,i)*(1 - xd) + p_opacity_table_reader->ross_tab(k+1,j+1,i)*xd;
+              double c11 = p_opacity_table_reader->ross_tab(k,j+1,i+1)*(1 - xd) + p_opacity_table_reader->ross_tab(k+1,j+1,i+1)*xd;
               double c0 = c00*(1 - yd) + c10*yd;
               double c1 = c01*(1 - yd) + c11*yd;
               table_opacity_value = c0*(1 - zd) + c1*zd;
 
               alpha_i[adaptive_level](l,m,n)+= table_opacity_value*nu_cgs;
+
+              c00 = p_opacity_table_reader->plan_tab(k,j,i)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j,i)*xd;
+              c01 = p_opacity_table_reader->plan_tab(k,j,i+1)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j,i+1)*xd;
+              c10 = p_opacity_table_reader->plan_tab(k,j+1,i)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j+1,i)*xd;
+              c11 = p_opacity_table_reader->plan_tab(k,j+1,i+1)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j+1,i+1)*xd;
+              c0 = c00*(1 - yd) + c10*yd;
+              c1 = c01*(1 - yd) + c11*yd;
+              table_opacity_value = c0*(1 - zd) + c1*zd;
               
               double planck_function = 2.0 * Physics::h * nu_cgs * nu_cgs * nu_cgs
                   / (Physics::c * Physics::c) / std::expm1(Physics::h * nu_cgs / kb_tt_e_cgs);

@@ -697,6 +697,8 @@ void RadiationIntegrator::SampleSimulation()
   sample_scattering[adaptive_level].Zero();
   sample_scattering_err[adaptive_level].Zero();
 
+  int num_mc_zeros = 0;
+
   // Resample cell data onto geodesics in parallel
   #pragma omp parallel for schedule(static)
   for (int m = 0; m < num_pix; m++)
@@ -794,7 +796,8 @@ void RadiationIntegrator::SampleSimulation()
             for(int l=0; l<mc_num_freqs;l++){
               sample_scattering[adaptive_level](m,n,l) = grid_scatter[t](l,b,k,j,i);
               if(sample_scattering[adaptive_level](m,n,l)<0.0){
-               std::printf("Monte Carlo scattering value is non-positive at pixel %d , step %d , frequency index %d , block %d , value %g \n",m,n,l,b,sample_scattering[adaptive_level](m,n,l));
+                num_mc_zeros++;
+               //std::printf("Monte Carlo scattering value is non-positive at pixel %d , step %d , frequency index %d , block %d , value %g \n",m,n,l,b,sample_scattering[adaptive_level](m,n,l));
               }  
               if(mc_error)
                 sample_scattering_err[adaptive_level](m,n,l) = grid_scatter_err[t](l,b,k,j,i); 
@@ -862,7 +865,6 @@ void RadiationIntegrator::SampleSimulation()
       else if (not ((simulation_format == SimulationFormat::athena
           or simulation_format == SimulationFormat::athenak) and simulation_block_interp))
       {
-        //TEGAN: this is the loop we're in
         // Extract indices and coefficients
         int b = sample_inds[adaptive_level](m,n,0);
         int k = sample_inds[adaptive_level](m,n,1);
@@ -1152,7 +1154,7 @@ void RadiationIntegrator::SampleSimulation()
       }
     }
   }
-
+  std::printf("Number of Monte Carlo scattering values that were non-positive: %d \n",num_mc_zeros);
   // Free memory
   if (adaptive_level > 0)
   {

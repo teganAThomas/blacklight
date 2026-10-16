@@ -45,6 +45,11 @@ file_type = phlist
 file_type = hdf5
 variable = prim
 
+
+<output3>
+file_type = hdf5
+variable = mcscat
+
 <coord>
 m = 1.0 #because our pgen assumes m is 1 in code units
 a = 0.0
@@ -89,7 +94,7 @@ nx3 = 4
 # GeneralPusher regardless), and boosts is what makes the static-observer velocity set in
 # the problem generator actually reach the comoving tetrad.
 <montecarlo>
-nphot     = 4000000
+nphot     = 200000
 iseed     = 121500
 scattering = none
 emission   = freefree
@@ -99,6 +104,9 @@ general_pusher = true
 boosts    = true
 stepsize  = 0.1
 varystep = true
+nf_scat = 40
+emin_scat = 10.
+emax_scat = 100000.
 
 # dens is chosen so the free-free optical depth across the shell is ~100 at the Planck
 # peak (243 eV for T = 1e6 K), which is thick enough that the emergent flux is sigma T^4
@@ -114,13 +122,14 @@ varystep = true
 # never be zero, since GetTemperature() would form 0/0 and the NaN poisons the emission
 # array through eta0/sqrt(0).
 <problem>
-temp     = 1.0e6       # isothermal temperature
+temp     = 1.0e7       # isothermal temperature
 constdens = true
-dens     = 1.5974e-3   # g/cm^3, gives tau_ff ~ 100 at the spectral peak
+dens     = 2.0e-3   # g/cm^3, gives tau_ff ~ 100 at the spectral peak
 ambient  = 1.0         # density outside the shell, relative to the base (must be > 0)
 tnorm   = true
-emin = 0.3             
+emin = 0.01             
 emax = 20.
 l_cgs = 1476625.0380501247
 vel_cgs = 29979245800.0
 tgas_cgs = 1.08101416735e+13 #c^2/rideal
+
