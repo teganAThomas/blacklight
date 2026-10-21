@@ -206,6 +206,13 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
     if (image_light or image_tau or image_tau_int or image_photosphere_int)
       alpha_i[adaptive_level].Allocate(image_num_frequencies, num_pix,
           geodesic_num_steps[adaptive_level]);
+    
+    if ((image_light or image_emission or image_emission_ave) && opacity_table)
+      j_i_low[adaptive_level].Allocate(image_num_frequencies, num_pix,
+          geodesic_num_steps[adaptive_level]);
+    if ((image_light or image_tau or image_tau_int or image_photosphere_int) && opacity_table)
+      alpha_i_low[adaptive_level].Allocate(image_num_frequencies, num_pix,
+          geodesic_num_steps[adaptive_level]);
     if (image_light and image_polarization)
     {
       j_q[adaptive_level].Allocate(image_num_frequencies, num_pix,
@@ -231,6 +238,10 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
     
   }
   j_i[adaptive_level].Zero();
+  if(opacity_table){
+    j_i_low[adaptive_level].Zero();
+    alpha_i_low[adaptive_level].Zero();
+  }
   j_q[adaptive_level].Zero();
   j_v[adaptive_level].Zero();
   alpha_i[adaptive_level].Zero();
@@ -302,21 +313,14 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
         double bb3_sim = sample_bb3[adaptive_level](m,n);        
 
         //scale model velocities appropriately
-        //std::printf("uu1_sim = %.5e, uu2_sim = %.5e, uu3_sim = %.5e\n",uu1_sim,uu2_sim,uu3_sim);
         uu1_sim *= v_unit;
         uu2_sim *= v_unit;
         uu3_sim *= v_unit;
-        //std::printf("second uu1_sim = %.5e, uu2_sim = %.5e, uu3_sim = %.5e\n",uu1_sim,uu2_sim,uu3_sim);
-        //TEGAN: try to understand why I have to multiply v_unit twice!!
-       
-
-        //std::printf("third uu1_sim = %.5e, uu2_sim = %.5e, uu3_sim = %.5e\n",uu1_sim,uu2_sim,uu3_sim);
 
         // Calculate densities and pressures
         double rho_cgs = rho * d_unit;
         double pgas_cgs = pgas * e_unit;
         double n_cgs = rho_cgs / (plasma_mu * Physics::m_p);
-        // rho_cgs: 1.477e+01 uu1_sim: 2.896e-01 pgas_cgs: 1.103e+36
         
         //plasma_ne_ni is set through our input parameters as 1 so basically number density for both is equal everywhere
         double n_e_cgs = n_cgs*plasma_ne_ni;
@@ -523,64 +527,94 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
           double nu_c_cgs = Physics::e * bb_cgs / (2.0 * Math::pi * Physics::m_e * Physics::c);
           double nu_s_cgs = 2.0 / 9.0 * nu_c_cgs * theta_e * theta_e * sin_theta_b;
 
-          //TEGAN: here is the table opacity 
-          double table_opacity_value=0.0;
-          
+          // Two-band (picket-fence) split of the TOPS group opacities
+          //   high band: frequency fraction opacity_w0, absorption alpha_h (lines)
+          //   low band:  fraction 1 - opacity_w0, absorption alpha_l (gaps between lines)
+          // Chosen so that w alpha_h + (1-w) alpha_l = Planck mean (absorption only) and
+          //   [w/alpha_h + (1-w)/alpha_l]^-1 = Rosseland mean (as tabulated, incl. scattering)
+          // Each band emits with its own absorption (Kirchhoff per band); the integrator combines
+          //   I = w I_high + (1-w) I_low. Single-band cells have alpha_h = alpha_l = Planck mean.
           bool default_to_free_free = false;
-          //TEGAN: maybe consider doing the interpolation over temp and density via simulation_sampling
-          if(opacity_table){
-            //if we have NaN frequency, just treat it as blacklight does normally
-            if(nu_cgs != nu_cgs){
+          if (opacity_table)
+          {
+            // If we have NaN frequency, just treat it as blacklight does normally
+            if (nu_cgs != nu_cgs)
               default_to_free_free = true;
-            }else{
-            double log_freq = std::log10(nu_cgs*Physics::h);
-            double log_temp = std::log10(kb_tt_e_cgs/Physics::k_b);
-            double log_rho = std::log10(rho_cgs);
-            if(log_freq < p_opacity_table_reader->fmin || log_freq > p_opacity_table_reader->fmax){
-              default_to_free_free = true;
-            }
-            if(log_temp < p_opacity_table_reader->tmin || log_temp > p_opacity_table_reader->tmax){
-              default_to_free_free = true;
-            }
-            if(log_rho < p_opacity_table_reader->rmin || log_rho > p_opacity_table_reader->rmax){
-              default_to_free_free = true;
-            }
-          
-            if(!default_to_free_free){
-              double xi = (log_rho - p_opacity_table_reader->rmin)/p_opacity_table_reader->dlr;
-              double xj = (log_temp - p_opacity_table_reader->tmin)/p_opacity_table_reader->dlt;
-              double xk = (log_freq - p_opacity_table_reader->fmin)/p_opacity_table_reader->dlf;
-              
-              int i = std::floor(xi);
-              int j = std::floor(xj);
-              int k = std::floor(xk);
+            else
+            {
+              const OpacityTableReader *p_tab = p_opacity_table_reader;
+              double log_freq = std::log10(nu_cgs * Physics::h);
+              double log_temp = std::log10(kb_tt_e_cgs / Physics::k_b);
+              double log_rho = std::log10(rho_cgs);
 
-              double xd = xi - i;
-              double yd = xj - j;
-              double zd = xk - k;
-              double c00 = p_opacity_table_reader->ross_tab(k,j,i)*(1 - xd) + p_opacity_table_reader->ross_tab(k+1,j,i)*xd;
-              double c01 = p_opacity_table_reader->ross_tab(k,j,i+1)*(1 - xd) + p_opacity_table_reader->ross_tab(k+1,j,i+1)*xd;
-              double c10 = p_opacity_table_reader->ross_tab(k,j+1,i)*(1 - xd) + p_opacity_table_reader->ross_tab(k+1,j+1,i)*xd;
-              double c11 = p_opacity_table_reader->ross_tab(k,j+1,i+1)*(1 - xd) + p_opacity_table_reader->ross_tab(k+1,j+1,i+1)*xd;
-              double c0 = c00*(1 - yd) + c10*yd;
-              double c1 = c01*(1 - yd) + c11*yd;
-              table_opacity_value = c0*(1 - zd) + c1*zd;
+              if (log_freq < p_tab->fmin or log_freq > p_tab->fmax
+                  or log_temp < p_tab->tmin or log_temp > p_tab->tmax
+                  or log_rho < p_tab->rmin or log_rho > p_tab->rmax)
+                default_to_free_free = true;
 
-              alpha_i[adaptive_level](l,m,n)+= table_opacity_value*nu_cgs;
+              if (!default_to_free_free)
+              {
+                // Trilinear interpolation in (log nu, log T, log rho)
+                double xi = (log_rho - p_tab->rmin) / p_tab->dlr;
+                double xj = (log_temp - p_tab->tmin) / p_tab->dlt;
+                double xk = (log_freq - p_tab->fmin) / p_tab->dlf;
+                int i = std::min(static_cast<int>(xi), p_tab->num_rho - 2);
+                int j = std::min(static_cast<int>(xj), p_tab->num_temps - 2);
+                int k = std::min(static_cast<int>(xk), p_tab->num_freqs - 2);
+                double fi = xi - i;
+                double fj = xj - j;
+                double fk = xk - k;
+                auto interpolate = [&](const Array<double> &tab)
+                {
+                  double c00 = tab(k,j,i) * (1.0 - fi) + tab(k,j,i+1) * fi;
+                  double c01 = tab(k,j+1,i) * (1.0 - fi) + tab(k,j+1,i+1) * fi;
+                  double c10 = tab(k+1,j,i) * (1.0 - fi) + tab(k+1,j,i+1) * fi;
+                  double c11 = tab(k+1,j+1,i) * (1.0 - fi) + tab(k+1,j+1,i+1) * fi;
+                  double c0 = c00 * (1.0 - fj) + c01 * fj;
+                  double c1 = c10 * (1.0 - fj) + c11 * fj;
+                  return c0 * (1.0 - fk) + c1 * fk;
+                };
 
-              c00 = p_opacity_table_reader->plan_tab(k,j,i)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j,i)*xd;
-              c01 = p_opacity_table_reader->plan_tab(k,j,i+1)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j,i+1)*xd;
-              c10 = p_opacity_table_reader->plan_tab(k,j+1,i)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j+1,i)*xd;
-              c11 = p_opacity_table_reader->plan_tab(k,j+1,i+1)*(1 - xd) + p_opacity_table_reader->plan_tab(k+1,j+1,i+1)*xd;
-              c0 = c00*(1 - yd) + c10*yd;
-              c1 = c01*(1 - yd) + c11*yd;
-              table_opacity_value = c0*(1 - zd) + c1*zd;
-              
-              double planck_function = 2.0 * Physics::h * nu_cgs * nu_cgs * nu_cgs
-                  / (Physics::c * Physics::c) / std::expm1(Physics::h * nu_cgs / kb_tt_e_cgs);
-              j_i[adaptive_level](l,m,n) += table_opacity_value* planck_function/(nu_cgs*nu_cgs);
+                // Table values were multiplied by rho in the reader, so these are in cm^-1
+                double alpha_p = interpolate(p_tab->plan_tab);  // Planck mean, absorption only
+                double alpha_r = interpolate(p_tab->ross_tab);  // Rosseland mean, incl. scattering
+
+                // Solve two-band split with fixed w (Shane's two_band(), 'w' closure) using the
+                // table Rosseland mean as is (scattering not subtracted)
+                double alpha_h = alpha_p;
+                double alpha_l = alpha_p;
+                if (alpha_r < alpha_p)
+                {
+                  // w alpha_h^2 + alpha_h (alpha_r (1-2w) - alpha_p) + w alpha_r alpha_p = 0
+                  double w0 = opacity_w0;
+                  double bb = alpha_p - alpha_r * (1.0 - 2.0 * w0);
+                  alpha_h = (bb + std::sqrt(std::max(bb * bb - 4.0 * w0 * w0 * alpha_r * alpha_p,
+                      0.0))) / (2.0 * w0);
+                  alpha_l = (alpha_p - w0 * alpha_h) / (1.0 - w0);
+
+                  // w0 too large for this cell: keep w fixed and preserve the Planck mean rather
+                  // than fall back to a different w
+                  if (alpha_l < 0.0)
+                  {
+                    alpha_l = 0.0;
+                    alpha_h = alpha_p / w0;
+                  }
+                }
+
+                if (image_light or image_tau or image_tau_int or image_photosphere_int)
+                {
+                  alpha_i[adaptive_level](l,m,n) += alpha_h * nu_cgs;
+                  alpha_i_low[adaptive_level](l,m,n) += alpha_l * nu_cgs;
+                }
+                if (image_light or image_emission or image_emission_ave)
+                {
+                  double planck_function = 2.0 * Physics::h * nu_cgs * nu_cgs * nu_cgs
+                      / (Physics::c * Physics::c) / std::expm1(Physics::h * nu_cgs / kb_tt_e_cgs);
+                  j_i[adaptive_level](l,m,n) += alpha_h * planck_function / (nu_cgs * nu_cgs);
+                  j_i_low[adaptive_level](l,m,n) += alpha_l * planck_function / (nu_cgs * nu_cgs);
+                }
+              }
             }
-          }
           }
           double scattering = 0.0;
           double scattering_error = 0.0;
@@ -759,7 +793,12 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
 
            double coefficient = partA*partB*n_e_cgs*n_i_cgs*std::exp(-Physics::h*nu_cgs/kb_tt_e_cgs)*gaunt_factor;
             if (image_light or image_emission or image_emission_ave)
+            {
               j_i[adaptive_level](l,m,n) += coefficient/(nu_cgs*nu_cgs);
+              //outside the table there is no line structure: low band matches high band
+              if (opacity_table)
+                j_i_low[adaptive_level](l,m,n) += coefficient/(nu_cgs*nu_cgs);
+            }
 
             if (image_light and image_polarization)
             {
@@ -782,6 +821,8 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
             //std::printf("alpha coeff cgs: %e\n", partA*partB*std::sqrt(kb_tt_e_cgs/Physics::k_b));
             if (image_light or image_emission or image_emission_ave)
             alpha_i[adaptive_level](l,m,n) += coefficient*nu_cgs;
+            if (opacity_table and (image_light or image_tau or image_tau_int or image_photosphere_int))
+              alpha_i_low[adaptive_level](l,m,n) += coefficient*nu_cgs;
             if (image_light and image_polarization)
             {
               alpha_q[adaptive_level](l,m,n) += 0.0;

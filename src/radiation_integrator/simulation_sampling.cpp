@@ -239,7 +239,6 @@ void RadiationIntegrator::CalculateSimulationSampling(int snapshot)
       // Go along geodesic
       for (int n = 0; n < num_steps; n++)
       {
-        //TEGAN: identify where the sample_pos is coming from/being defined
         // Extract coordinates
         double x0 = sample_pos[adaptive_level](m,n,0) + snapshot_time;
         double x1 = sample_pos[adaptive_level](m,n,1);

@@ -26,6 +26,9 @@
 //   Assumes cell_values[adaptive_level] has been set if image_lambda_ave == true or
 //       image_emission_ave == true or image_tau_int == true.
 //   Allocates and initializes image[adaptive_level].
+//   With an opacity table, integrates the high band (j_i, alpha_i) and low band (j_i_low,
+//       alpha_i_low) separately, stores the low band in image_low[adaptive_level], and sets the
+//       light in image[adaptive_level] to opacity_w0 I_high + (1 - opacity_w0) I_low.
 //   Deallocates j_i[adaptive_level] and alpha_i[adaptive_level] if adaptive_level > 0.
 //   Deallocates cell_values[adaptive_level] if render_num_images <= 0 and adaptive_level > 0.
 void RadiationIntegrator::IntegrateUnpolarizedRadiation()
@@ -37,6 +40,13 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
   if (first_time or adaptive_level > 0)
     image[adaptive_level].Allocate(image_num_quantities, num_pix);
   image[adaptive_level].Zero();
+  bool two_band = opacity_table and image_light;
+  if (two_band)
+  {
+    if (first_time or adaptive_level > 0)
+      image_low[adaptive_level].Allocate(image_num_frequencies, num_pix);
+    image_low[adaptive_level].Zero();
+  }
 
   // Calculate units
   double x_unit = Physics::gg_msun * mass_msun / (Physics::c * Physics::c);
@@ -70,6 +80,7 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
 
         double previous_delta_tau = 0.;
         int photosphere_steps = 0;
+        double scat_err_low = 0.0;
         // Go through samples
         for (int n = 0; n < num_steps; n++)
         {
@@ -136,13 +147,20 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
 
 
           double j = std::numeric_limits<double>::quiet_NaN();
+          double j_low = std::numeric_limits<double>::quiet_NaN();
           if (image_light or image_emission or image_emission_ave)
             j = j_i[adaptive_level](l,m,n);
+          if ((image_light or image_emission or image_emission_ave) && opacity_table)
+            j_low = j_i_low[adaptive_level](l,m,n);
           double alpha = std::numeric_limits<double>::quiet_NaN();
+          double alpha_low = std::numeric_limits<double>::quiet_NaN();
           if (image_light or image_tau or image_tau_int)
             alpha = alpha_i[adaptive_level](l,m,n);
+          if ((image_light or image_tau or image_tau_int) && opacity_table)
+            alpha_low = alpha_i_low[adaptive_level](l,m,n);
           double ss = j / alpha;
           double delta_tau = alpha * delta_lambda_cgs;
+          
           double exp_neg = std::exp(-delta_tau);
           double expm1 = std::expm1(delta_tau);
           bool optically_thin = delta_tau <= delta_tau_max;
@@ -176,6 +194,38 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
               if(mc_error)
                 image[adaptive_level](image_offset_scat_err+l,m) = std::sqrt(
                     std::pow(image[adaptive_level](image_offset_scat_err+l,m), 2.)
+                    + std::pow(delta_lambda_cgs, 2.) * scat_err[adaptive_level](l,m,n));
+            }
+          }
+
+          // Integrate light in low band (same scheme as above, with low-band coefficients)
+          if (two_band)
+          {
+            double ss_low = j_low / alpha_low;
+            double delta_tau_low = alpha_low * delta_lambda_cgs;
+            double exp_neg_low = std::exp(-delta_tau_low);
+            double expm1_low = std::expm1(delta_tau_low);
+            if (alpha_low > 0.0)
+            {
+              if (delta_tau_low <= delta_tau_max)
+              {
+                image_low[adaptive_level](l,m) =
+                    exp_neg_low * (image_low[adaptive_level](l,m) + ss_low * expm1_low);
+                if(mc_error)
+                  scat_err_low = std::sqrt(std::pow(scat_err_low*exp_neg_low,2.)+std::pow(exp_neg_low*expm1_low/alpha_low,2.)*scat_err[adaptive_level](l,m,n));
+              }
+              else
+              {
+                image_low[adaptive_level](l,m) = ss_low;
+                if(mc_error)
+                  scat_err_low = std::sqrt(scat_err[adaptive_level](l,m,n)/(alpha_low*alpha_low));
+              }
+            }
+            else
+            {
+              image_low[adaptive_level](l,m) += j_low * delta_lambda_cgs;
+              if(mc_error)
+                scat_err_low = std::sqrt(std::pow(scat_err_low, 2.)
                     + std::pow(delta_lambda_cgs, 2.) * scat_err[adaptive_level](l,m,n));
             }
           }
@@ -303,6 +353,20 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
           }
         }
         
+        // Combine bands: I = w I_high + (1 - w) I_low (single-band cells have equal coefficients in
+        // both bands, so this reduces to the one-band result)
+        if (two_band)
+        {
+          std::printf("two band!");
+          image[adaptive_level](l,m) = opacity_w0 * image[adaptive_level](l,m)
+              + (1.0 - opacity_w0) * image_low[adaptive_level](l,m);
+          // Both bands use the same scattering samples, so their errors are fully correlated
+          if(mc_error)
+            image[adaptive_level](image_offset_scat_err+l,m) =
+                opacity_w0 * image[adaptive_level](image_offset_scat_err+l,m)
+                + (1.0 - opacity_w0) * scat_err_low;
+        }
+
         // Store integrated quantities
         if (image_lambda)
           image[adaptive_level](image_offset_lambda+l,m) = integrated_lambda;
@@ -353,6 +417,8 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
         {
           double nu_cu = image_frequencies(l) * image_frequencies(l) * image_frequencies(l);
           image[adaptive_level](l,m) *= nu_cu;
+          if (two_band)
+            image_low[adaptive_level](l,m) *= nu_cu;
           if(mc_error)
             image[adaptive_level](image_offset_scat_err+l,m) *= nu_cu;
         }
@@ -364,6 +430,11 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
   {
     j_i[adaptive_level].Deallocate();
     alpha_i[adaptive_level].Deallocate();
+    if (opacity_table)
+    {
+      j_i_low[adaptive_level].Deallocate();
+      alpha_i_low[adaptive_level].Deallocate();
+    }
     if (render_num_images <= 0)
       cell_values[adaptive_level].Deallocate();
     if(mc_error)
