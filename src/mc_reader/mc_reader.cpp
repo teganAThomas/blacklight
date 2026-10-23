@@ -642,9 +642,7 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
               }*/
 
 
-            //turn standard deviation to variance. this will be used up until integration
-            //scattering_error(l,b,k,j,i) *= scattering_error(l,b,k,j,i);
-
+            
           }
         }
       }
