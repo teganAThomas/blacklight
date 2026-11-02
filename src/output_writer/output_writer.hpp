@@ -67,6 +67,7 @@ struct OutputWriter
   bool image_tau_int;
   bool image_photosphere_int;
   bool image_crossings;
+  bool opac_table;
   int image_offset_time;
   int image_offset_length;
   int image_offset_lambda;
@@ -109,6 +110,8 @@ struct OutputWriter
 
   // Image data
   Array<double> *image = nullptr;
+  Array<double> *image_low = nullptr;
+  Array<double> *image_high = nullptr;
 
   // Render data
   Array<double> *render = nullptr;

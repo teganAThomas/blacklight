@@ -70,6 +70,7 @@ OutputWriter::OutputWriter(const InputReader *p_input_reader_,
         and not (output_format == OutputFormat::npz or output_format == OutputFormat::npy))
       throw BlacklightException("Only npz or npy outputs support polarization.");
   }
+  opac_table = p_input_reader->opacity_table.value();
   image_time = p_input_reader->image_time.value();
   image_length = p_input_reader->image_length.value();
   image_lambda = p_input_reader->image_lambda.value();
@@ -140,6 +141,11 @@ OutputWriter::OutputWriter(const InputReader *p_input_reader_,
 
   // Allocate space for image data
   image = new Array<double>[adaptive_max_level+1];
+  if(opac_table){
+    image_low = new Array<double>[adaptive_max_level+1];
+    image_high = new Array<double>[adaptive_max_level+1];
+  }
+  
 
   // Allocate space for render data
   render = new Array<double>[adaptive_max_level+1];
@@ -165,6 +171,10 @@ OutputWriter::~OutputWriter()
   delete[] camera_pos;
   delete[] camera_dir;
   delete[] image;
+  if(opac_table){
+    delete[] image_low;
+    delete[] image_high;
+  }
   delete[] render;
 }
 
@@ -233,6 +243,33 @@ void OutputWriter::Write(int snapshot)
       image[level].n3 = block_counts_array(level);
       image[level].n2 = adaptive_block_size;
       image[level].n1 = adaptive_block_size;
+    }
+    if(opac_table){
+      image_low[0] = p_radiation_integrator->image_low[0];
+      image_low[0].n3 = image_low[0].n2;
+      image_low[0].n2 = camera_resolution;
+      image_low[0].n1 = camera_resolution;
+      for (int level = 1; level <= adaptive_num_levels_array(0); level++)
+      {
+        image_low[level] = p_radiation_integrator->image_low[level];
+        image_low[level].n4 = image_low[level].n2;
+        image_low[level].n3 = block_counts_array(level);
+        image_low[level].n2 = adaptive_block_size;
+        image_low[level].n1 = adaptive_block_size;
+      }
+
+      image_high[0] = p_radiation_integrator->image_high[0];
+      image_high[0].n3 = image_high[0].n2;
+      image_high[0].n2 = camera_resolution;
+      image_high[0].n1 = camera_resolution;
+      for (int level = 1; level <= adaptive_num_levels_array(0); level++)
+      {
+        image_high[level] = p_radiation_integrator->image_high[level];
+        image_high[level].n4 = image_high[level].n2;
+        image_high[level].n3 = block_counts_array(level);
+        image_high[level].n2 = adaptive_block_size;
+        image_high[level].n1 = adaptive_block_size;
+      }
     }
   }
 

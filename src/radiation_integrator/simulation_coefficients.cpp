@@ -207,12 +207,18 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
       alpha_i[adaptive_level].Allocate(image_num_frequencies, num_pix,
           geodesic_num_steps[adaptive_level]);
     
-    if ((image_light or image_emission or image_emission_ave) && opacity_table)
+    if ((image_light or image_emission or image_emission_ave) && opacity_table){
       j_i_low[adaptive_level].Allocate(image_num_frequencies, num_pix,
           geodesic_num_steps[adaptive_level]);
-    if ((image_light or image_tau or image_tau_int or image_photosphere_int) && opacity_table)
+      j_i_high[adaptive_level].Allocate(image_num_frequencies, num_pix,
+          geodesic_num_steps[adaptive_level]);
+    }
+    if ((image_light or image_tau or image_tau_int or image_photosphere_int) && opacity_table){
       alpha_i_low[adaptive_level].Allocate(image_num_frequencies, num_pix,
           geodesic_num_steps[adaptive_level]);
+      alpha_i_high[adaptive_level].Allocate(image_num_frequencies, num_pix,
+          geodesic_num_steps[adaptive_level]);
+    }
     if (image_light and image_polarization)
     {
       j_q[adaptive_level].Allocate(image_num_frequencies, num_pix,
@@ -241,6 +247,8 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
   if(opacity_table){
     j_i_low[adaptive_level].Zero();
     alpha_i_low[adaptive_level].Zero();
+    j_i_high[adaptive_level].Zero();
+    alpha_i_high[adaptive_level].Zero();
   }
   j_q[adaptive_level].Zero();
   j_v[adaptive_level].Zero();
@@ -574,10 +582,10 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
                   double c1 = c10 * (1.0 - fj) + c11 * fj;
                   return c0 * (1.0 - fk) + c1 * fk;
                 };
-
+                double alpha_s = 6.652459e-25*n_e_cgs;
                 // Table values were multiplied by rho in the reader, so these are in cm^-1
                 double alpha_p = interpolate(p_tab->plan_tab);  // Planck mean, absorption only
-                double alpha_r = interpolate(p_tab->ross_tab);  // Rosseland mean, incl. scattering
+                double alpha_r = interpolate(p_tab->ross_tab);  // Rosseland mean, without scattering
 
                 // Solve two-band split with fixed w (Shane's two_band(), 'w' closure) using the
                 // table Rosseland mean as is (scattering not subtracted)
@@ -603,14 +611,15 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
 
                 if (image_light or image_tau or image_tau_int or image_photosphere_int)
                 {
-                  alpha_i[adaptive_level](l,m,n) += alpha_h * nu_cgs;
+                  alpha_i_high[adaptive_level](l,m,n) += alpha_h * nu_cgs;
                   alpha_i_low[adaptive_level](l,m,n) += alpha_l * nu_cgs;
                 }
                 if (image_light or image_emission or image_emission_ave)
                 {
                   double planck_function = 2.0 * Physics::h * nu_cgs * nu_cgs * nu_cgs
                       / (Physics::c * Physics::c) / std::expm1(Physics::h * nu_cgs / kb_tt_e_cgs);
-                  j_i[adaptive_level](l,m,n) += alpha_h * planck_function / (nu_cgs * nu_cgs);
+                  
+                  j_i_high[adaptive_level](l,m,n) += alpha_h * planck_function / (nu_cgs * nu_cgs);
                   j_i_low[adaptive_level](l,m,n) += alpha_l * planck_function / (nu_cgs * nu_cgs);
                 }
               }
@@ -682,10 +691,20 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
             //NOTE THAT IF THE VALUE NATURALLY OCCURS IN YOUR DOMAIN AND ISN'T 0 THIS COULD BE PROBLEMATIC
             if(rho_cgs!=fallback_rho){
               double x = Physics::h*nu_cgs/(Physics::m_e*Physics::c*Physics::c);
-              if(compton){
-                alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs*(1.-2.0*x);
+              if(opacity_table){
+                if(compton){
+                  alpha_i_low[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs*(1.-2.0*x);
+                  alpha_i_high[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs*(1.-2.0*x);
+                }else{
+                  alpha_i_low[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs;
+                  alpha_i_high[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs;
+                }
               }else{
-                alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs;
+                if(compton){
+                  alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs*(1.-2.0*x);
+                }else{
+                  alpha_i[adaptive_level](l,m,n) += Physics::sigma_t*n_e_cgs*nu_cgs;
+                }
               }
               //scattering already has the nu_cgs^-2 factored in 
               j_i[adaptive_level](l,m,n) += scattering;
@@ -784,7 +803,7 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
           }
 
           //Calculate thermal free-free emissivities (Rybicki & Lightman, eqn 5.14a)
-          if (plasma_thermal_frac != 0.0 and image_free_free and (!opacity_table || default_to_free_free))
+          if (plasma_thermal_frac != 0.0 and image_free_free and !opacity_table)
           {
            double partA = 8.0*std::pow(Physics::e,6.)/(3.0*Physics::m_e*std::pow(Physics::c,3.));
            double partB = std::sqrt(2.0*Math::pi/(3.0*kb_tt_e_cgs*Physics::m_e));
@@ -796,8 +815,9 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
             {
               j_i[adaptive_level](l,m,n) += coefficient/(nu_cgs*nu_cgs);
               //outside the table there is no line structure: low band matches high band
-              if (opacity_table)
-                j_i_low[adaptive_level](l,m,n) += coefficient/(nu_cgs*nu_cgs);
+              // I don't want to use free-free as a back-up for the opacity table
+              //if (opacity_table)
+              //  j_i_low[adaptive_level](l,m,n) += coefficient/(nu_cgs*nu_cgs);
             }
 
             if (image_light and image_polarization)
@@ -810,7 +830,7 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
 
           //Calculate thermal free-free absorptivities (Rybicki & Lightman, eqn 5.18a)
           //note: this results in very large absorption for radio wavelengths so the image is even dimmer than without free_free emission
-          if (plasma_thermal_frac != 0.0 and (image_light or image_tau or image_tau_int or image_photosphere_int) and image_free_free and (!opacity_table || default_to_free_free))
+          if (plasma_thermal_frac != 0.0 and (image_light or image_tau or image_tau_int or image_photosphere_int) and image_free_free and !opacity_table)
           {
            double partA = 4*pow(Physics::e,6.)/(3*Physics::m_e*Physics::c*Physics::h);
            double partB = std::sqrt(2.0*Math::pi/(3.0*kb_tt_e_cgs*Physics::m_e));
@@ -821,8 +841,9 @@ void RadiationIntegrator::CalculateSimulationCoefficients()
             //std::printf("alpha coeff cgs: %e\n", partA*partB*std::sqrt(kb_tt_e_cgs/Physics::k_b));
             if (image_light or image_emission or image_emission_ave)
             alpha_i[adaptive_level](l,m,n) += coefficient*nu_cgs;
-            if (opacity_table and (image_light or image_tau or image_tau_int or image_photosphere_int))
-              alpha_i_low[adaptive_level](l,m,n) += coefficient*nu_cgs;
+            // I don't want to 
+            //if (opacity_table and (image_light or image_tau or image_tau_int or image_photosphere_int))
+            //  alpha_i_low[adaptive_level](l,m,n) += coefficient*nu_cgs;
             if (image_light and image_polarization)
             {
               alpha_q[adaptive_level](l,m,n) += 0.0;

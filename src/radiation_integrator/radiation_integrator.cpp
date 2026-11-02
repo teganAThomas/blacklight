@@ -469,6 +469,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
   scat_err = new Array<double>[adaptive_max_level+1];
   j_i_low = new Array<double>[adaptive_max_level+1];
   alpha_i_low = new Array<double>[adaptive_max_level+1];
+  j_i_high = new Array<double>[adaptive_max_level+1];
+  alpha_i_high = new Array<double>[adaptive_max_level+1];
 
   // Copy slow-light extrapolation tolerance
   if (slow_light_on)
@@ -496,6 +498,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
   // Allocate space for image data
   image = new Array<double>[adaptive_max_level+1];
   image_low = new Array<double>[adaptive_max_level+1];
+  image_high = new Array<double>[adaptive_max_level+1];
 
   // Calculate number of simultaneous images and their offsets
   if (image_light)
@@ -764,6 +767,8 @@ RadiationIntegrator::~RadiationIntegrator()
     scat_err[level].Deallocate();
     j_i_low[level].Deallocate();
     alpha_i_low[level].Deallocate();
+    j_i_high[level].Deallocate();
+    alpha_i_high[level].Deallocate();
   }
   delete[] j_i;
   delete[] j_q;
@@ -777,15 +782,19 @@ RadiationIntegrator::~RadiationIntegrator()
   delete[] scat_err;
   delete[] j_i_low;
   delete[] alpha_i_low;
+  delete[] j_i_high;
+  delete[] alpha_i_high;
 
   // Free memory - image data
   for (int level = 0; level <= adaptive_max_level; level++)
   {
     image[level].Deallocate();
     image_low[level].Deallocate();
+    image_high[level].Deallocate();
   }
   delete[] image;
   delete[] image_low;
+  delete[] image_high;
 
   // Free memory - rendering data
   for (int level = 0; level <= adaptive_max_level; level++)

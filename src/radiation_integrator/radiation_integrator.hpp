@@ -295,15 +295,18 @@ struct RadiationIntegrator
   Array<double> *cell_values = nullptr;
   Array<double> *scat_err = nullptr;
   Array<double> *j_i_low = nullptr;
+  Array<double> *j_i_high = nullptr;
   Array<double> *alpha_i_low = nullptr;
+  Array<double> *alpha_i_high = nullptr;
 
   // Two-band opacity split: fixed high-band fraction, same in every two-band cell
   // Integrator combines bands as I = opacity_w0 I_high + (1 - opacity_w0) I_low
-  static constexpr double opacity_w0 = 0.1;
+  static constexpr double opacity_w0 = 1e-3;
 
   // Image data
   Array<double> *image = nullptr;
   Array<double> *image_low = nullptr;
+  Array<double> *image_high = nullptr;
   Array<double> image_frequencies;
   Array<double> *momentum_factors = nullptr;
   int image_num_quantities = 0;

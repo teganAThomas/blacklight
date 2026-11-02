@@ -43,9 +43,12 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
   bool two_band = opacity_table and image_light;
   if (two_band)
   {
-    if (first_time or adaptive_level > 0)
+    if (first_time or adaptive_level > 0){
       image_low[adaptive_level].Allocate(image_num_frequencies, num_pix);
+      image_high[adaptive_level].Allocate(image_num_frequencies, num_pix);
+    }
     image_low[adaptive_level].Zero();
+    image_high[adaptive_level].Zero();
   }
 
   // Calculate units
@@ -81,6 +84,7 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
         double previous_delta_tau = 0.;
         int photosphere_steps = 0;
         double scat_err_low = 0.0;
+        double scat_err_high =0.0;
         // Go through samples
         for (int n = 0; n < num_steps; n++)
         {
@@ -148,16 +152,22 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
 
           double j = std::numeric_limits<double>::quiet_NaN();
           double j_low = std::numeric_limits<double>::quiet_NaN();
+          double j_high = std::numeric_limits<double>::quiet_NaN();
           if (image_light or image_emission or image_emission_ave)
             j = j_i[adaptive_level](l,m,n);
-          if ((image_light or image_emission or image_emission_ave) && opacity_table)
+          if ((image_light or image_emission or image_emission_ave) && opacity_table){
             j_low = j_i_low[adaptive_level](l,m,n);
+            j_high = j_i_high[adaptive_level](l,m,n);
+          }
           double alpha = std::numeric_limits<double>::quiet_NaN();
           double alpha_low = std::numeric_limits<double>::quiet_NaN();
+          double alpha_high = std::numeric_limits<double>::quiet_NaN();
           if (image_light or image_tau or image_tau_int)
             alpha = alpha_i[adaptive_level](l,m,n);
-          if ((image_light or image_tau or image_tau_int) && opacity_table)
+          if ((image_light or image_tau or image_tau_int) && opacity_table){
             alpha_low = alpha_i_low[adaptive_level](l,m,n);
+            alpha_high = alpha_i_high[adaptive_level](l,m,n);
+          }
           double ss = j / alpha;
           double delta_tau = alpha * delta_lambda_cgs;
           
@@ -171,7 +181,7 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
           int trace_pixel = m;
 
           // Integrate light
-          if (image_light)
+          if (image_light && !two_band)
           {
             if (alpha > 0.0)
             {
@@ -228,6 +238,44 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
                 scat_err_low = std::sqrt(std::pow(scat_err_low, 2.)
                     + std::pow(delta_lambda_cgs, 2.) * scat_err[adaptive_level](l,m,n));
             }
+
+            double ss_high = j_high / alpha_high;
+            double delta_tau_high = alpha_high * delta_lambda_cgs;
+            double exp_neg_high = std::exp(-delta_tau_high);
+            double expm1_high = std::expm1(delta_tau_high);
+            if (alpha_high > 0.0)
+            {
+              if (delta_tau_high <= delta_tau_max)
+              {
+                image_high[adaptive_level](l,m) =
+                    exp_neg_high * (image_high[adaptive_level](l,m) + ss_high * expm1_high);
+                if(mc_error)
+                  scat_err_high = std::sqrt(std::pow(scat_err_high*exp_neg_high,2.)+std::pow(exp_neg_high*expm1_high/alpha_high,2.)*scat_err[adaptive_level](l,m,n));
+              }
+              else
+              {
+                image_high[adaptive_level](l,m) = ss_high;
+                if(mc_error)
+                  scat_err_high = std::sqrt(scat_err[adaptive_level](l,m,n)/(alpha_high*alpha_high));
+              }
+            }
+            else
+            {
+              image_high[adaptive_level](l,m) += j_high * delta_lambda_cgs;
+              if(mc_error)
+                scat_err_high = std::sqrt(std::pow(scat_err_high, 2.)
+                    + std::pow(delta_lambda_cgs, 2.) * scat_err[adaptive_level](l,m,n));
+            }
+
+          // Combine bands: I = w I_high + (1 - w) I_low (single-band cells have equal coefficients in
+        // both bands, so this reduces to the one-band result)
+          ///std::printf("two band!");
+          image[adaptive_level](l,m) = opacity_w0 * image_high[adaptive_level](l,m)
+              + (1.0 - opacity_w0) * image_low[adaptive_level](l,m);
+          // Both bands use the same scattering samples, so their errors are fully correlated
+          if(mc_error)
+            image[adaptive_level](image_offset_scat_err+l,m) = std::sqrt(std::pow(opacity_w0*scat_err_high,2.)+std::pow((1-opacity_w0)*scat_err_low,2.));
+          
           }
 
 
@@ -353,19 +401,7 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
           }
         }
         
-        // Combine bands: I = w I_high + (1 - w) I_low (single-band cells have equal coefficients in
-        // both bands, so this reduces to the one-band result)
-        if (two_band)
-        {
-          std::printf("two band!");
-          image[adaptive_level](l,m) = opacity_w0 * image[adaptive_level](l,m)
-              + (1.0 - opacity_w0) * image_low[adaptive_level](l,m);
-          // Both bands use the same scattering samples, so their errors are fully correlated
-          if(mc_error)
-            image[adaptive_level](image_offset_scat_err+l,m) =
-                opacity_w0 * image[adaptive_level](image_offset_scat_err+l,m)
-                + (1.0 - opacity_w0) * scat_err_low;
-        }
+        
 
         // Store integrated quantities
         if (image_lambda)
@@ -417,8 +453,10 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
         {
           double nu_cu = image_frequencies(l) * image_frequencies(l) * image_frequencies(l);
           image[adaptive_level](l,m) *= nu_cu;
-          if (two_band)
+          if (two_band){
             image_low[adaptive_level](l,m) *= nu_cu;
+            image_high[adaptive_level](l,m) *= nu_cu;
+          }
           if(mc_error)
             image[adaptive_level](image_offset_scat_err+l,m) *= nu_cu;
         }

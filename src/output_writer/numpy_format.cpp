@@ -48,6 +48,7 @@ void OutputWriter::WriteNpz()
   // Prepare buffers for data and headers
   int num_image_arrays = (image_light ? 1 : 0)
       + (image_light and model_type == ModelType::simulation and image_polarization ? 3 : 0)
+      + (image_light and opac_table?2:0)
       + (mc_error ? 1 : 0)
       + (image_time ? 1 : 0) + (image_length ? 1 : 0) + (image_lambda ? 1 : 0)
       + (image_emission ? 1 : 0) + (image_tau ? 1 : 0) + (image_mcscat ? 1 : 0) + (image_mcscat_ave ? 2 : 0)
@@ -169,6 +170,23 @@ void OutputWriter::WriteNpz()
           GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], "V_nu", &local_header_buffers[array_offset]);
+      array_offset++;
+    }
+    if(opac_table){
+      for (int l = 0; l < image_num_frequencies; l++)
+        image_deep_copy.CopyFrom(image_low[0], (l * image_stride) * num_pix, l * num_pix, num_pix);
+      data_lengths[array_offset] =
+          GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+      local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
+          data_lengths[array_offset], "I_low", &local_header_buffers[array_offset]);
+      array_offset++;
+
+      for (int l = 0; l < image_num_frequencies; l++)
+        image_deep_copy.CopyFrom(image_high[0], (l * image_stride) * num_pix, l * num_pix, num_pix);
+      data_lengths[array_offset] =
+          GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+      local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
+          data_lengths[array_offset], "I_high", &local_header_buffers[array_offset]);
       array_offset++;
     }
   }
@@ -479,6 +497,7 @@ void OutputWriter::WriteNpz()
             data_lengths[array_offset], name_buffer, &local_header_buffers[array_offset]);
         array_offset++;
       }
+      //TEGAN: to-do: implement the two band treatment for adaptive images
       if(mc_error){
         throw BlacklightWarning("adaptive level output for MC not done yet!");
       }
