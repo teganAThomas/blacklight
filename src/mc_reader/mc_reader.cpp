@@ -398,14 +398,14 @@ void MCReader::Gradient(Array<float> &grad, Array<float> &f, Array<double> &x){
     for(int k=0;k<f.n3;k++){
       for(int j=0;j<f.n2;j++){
         for(int i=0;i<f.n1;i++){
-          grad(0,b,k,j,i)    = (std::max<float>(0.0,f(1,b,k,j,i))   - std::max<float>(0.0,f(0,b,k,j,i)))   /(x(1)-x(0));
-          grad(nx-1,b,k,j,i) = (std::max<float>(0.0,f(nx-1,b,k,j,i)) - std::max<float>(0.0,f(nx-2,b,k,j,i)))/(x(nx-1)-x(nx-2));
+          grad(0,b,k,j,i)    = (f(1,b,k,j,i)   - f(0,b,k,j,i))   /(x(1)-x(0));
+          grad(nx-1,b,k,j,i) = (f(nx-1,b,k,j,i) - f(nx-2,b,k,j,i))/(x(nx-1)-x(nx-2));
           if(mc_error){
-            float f1 = std::max<float>(0.0,f(1+nx,b,k,j,i));
-            float f0 = std::max<float>(0.0,f(nx,b,k,j,i));
+            float f1 = f(1+nx,b,k,j,i);
+            float f0 = f(nx,b,k,j,i);
             grad(nx,b,k,j,i) = std::sqrt((f1*f1 + f0*f0))/(x(1)-x(0));
-            float fN1 = std::max<float>(0.0,f(2*nx-1,b,k,j,i));
-            float fN2 = std::max<float>(0.0,f(2*nx-2,b,k,j,i));
+            float fN1 = f(2*nx-1,b,k,j,i);
+            float fN2 = f(2*nx-2,b,k,j,i);
             grad(2*nx-1,b,k,j,i) = std::sqrt((fN1*fN1 + fN2*fN2))/(x(nx-1)-x(nx-2));
           }
         }
@@ -499,11 +499,11 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
 
               // Calculate simulation metric
               if(simulation_coord == Coordinates::cks){
-                CovariantSimulationMetric(simulation_r_rg*x1v(i,j), simulation_r_rg*x2v(i,j), simulation_r_rg*x3v(i,j), gcov_sim);
-                ContravariantSimulationMetric(simulation_r_rg*x1v(i,j), simulation_r_rg*x2v(i,j), simulation_r_rg*x3v(i,j), gcon_sim);
+                CovariantSimulationMetric(x1v(i,j), x2v(i,j), x3v(i,j), gcov_sim);
+                ContravariantSimulationMetric(x1v(i,j), x2v(i,j), x3v(i,j), gcon_sim);
               }else{
-                CovariantSimulationMetric(simulation_r_rg*x1v(i,j), x2v(i,j), x3v(i,j), gcov_sim);
-                ContravariantSimulationMetric(simulation_r_rg*x1v(i,j), x2v(i,j), x3v(i,j), gcon_sim);
+                CovariantSimulationMetric(x1v(i,j), x2v(i,j), x3v(i,j), gcov_sim);
+                ContravariantSimulationMetric(x1v(i,j), x2v(i,j), x3v(i,j), gcon_sim);
               }
 
               // Calculate simulation velocity
@@ -589,8 +589,8 @@ void MCReader::CalculateSourceTerm(Array<float> &source_term,Array<float> &scatt
               source_term(l,b,k,j,i) = 0.0;
               scattering_error(l,b,k,j,i) = 0.0;
             }else{*/
-            if(!std::isnan(scattering(l,b,k,j,i)) && scattering(l,b,k,j,i)>0.0){
-              source_term(l,b,k,j,i) = (1-x)*scattering(l,b,k,j,i)+ (x-3*theta_e)*scattering_prime(l,b,k,j,i)+theta_e*scattering_prime_prime(l,b,k,j,i);
+            source_term(l,b,k,j,i) = (1-x)*scattering(l,b,k,j,i)+ (x-3*theta_e)*scattering_prime(l,b,k,j,i)+theta_e*scattering_prime_prime(l,b,k,j,i);
+            if(!std::isnan(source_term(l,b,k,j,i)) && source_term(l,b,k,j,i)>0.0){
               /*double sigma_prime = scattering(l+source_term.n5+1,b,k,j,i)/std::pow((ln_freq_grid(l+1)-ln_freq_grid(l-1)),2.) + scattering(l+source_term.n5-1,b,k,j,i)/std::pow((ln_freq_grid(l+1)-ln_freq_grid(l-1)),2.);
               double sigma_prime_minus = scattering(l+source_term.n5,b,k,j,i)/std::pow((ln_freq_grid(l)-ln_freq_grid(l-2)),2.) + scattering(l+source_term.n5-2,b,k,j,i)/std::pow((ln_freq_grid(l)-ln_freq_grid(l-2)),2.);
               double sigma_prime_plus = scattering(l+source_term.n5+2,b,k,j,i)/std::pow((ln_freq_grid(l+2)-ln_freq_grid(l)),2.) + scattering(l+source_term.n5,b,k,j,i)/std::pow((ln_freq_grid(l+2)-ln_freq_grid(l)),2.);

@@ -30,7 +30,6 @@ simulation_interp       = false             # flag indicating interpolation shou
 simulation_block_interp = false            # flag indicating interpolation should cross blocks  
 simulation_hd_only = true
 simulation_mc_temp = true
-simulation_athenak_vars = false
 
 #opacity table parameters
 opacity_table = false
