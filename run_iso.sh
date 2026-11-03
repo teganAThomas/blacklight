@@ -32,9 +32,6 @@ FALLBACK_OUTPUT_DIR="./tests"
 
 INPUTS=(
     "example_isoth.input"
-    "example_isoth_gr.input"
-    "example_mc_thom_isoth_gr.input"
-    "example_mc_comp_isoth_gr.input"
 )
 
 # Blackbody temperature (K) and radius (cm) for each case, passed through to
@@ -42,38 +39,23 @@ INPUTS=(
 # above - i.e. TEMPERATURES[0]/RADII[0] go with INPUTS[0], and so on.
 TEMPERATURES=(
     1e6
-    1e6
-    1e7
-    1e7
 )
 RADII=(
     1e11
-    8859750.2283
-    8859750.2283
-    8859750.2283
 )
 
 # Redshift for each case, passed through to plot_spectra.py as
 # --redshift_re. Indices line up with INPUTS above.
 REDSHIFT=(
     0.0
-    6.0
-    6.0
-    6.0
 )
 
 YMIN=(
     1e35
-    1e30
-    1e30
-    1e30
 )
 
 YMAX=(
     1e45
-    1e35
-    1e40
-    1e40
 )
 
 mkdir -p "$LOG_DIR" "$FALLBACK_OUTPUT_DIR"
@@ -197,12 +179,4 @@ for i in "${!INPUTS[@]}"; do
         PLOT_RESULTS["$input"]="FAILED (exit $plot_status)"
     fi
     echo
-done
-
-echo "=============================================="
-echo "Summary"
-echo "=============================================="
-printf "%-28s %-22s %s\n" "INPUT" "BLACKLIGHT RUN" "PLOT"
-for input in "${INPUTS[@]}"; do
-    printf "%-28s %-22s %s\n" "$input" "${RUN_RESULTS[$input]:-NOT RUN}" "${PLOT_RESULTS[$input]:-NOT RUN}"
 done
