@@ -4,7 +4,7 @@ num_threads = 12           # number of threads to use in parallel
 
 # Output parameters
 output_format = npz                            # format of output file (npz, npy, raw)
-output_file   = /PellaShared/kcu8rf/blacklight/output/example_table_opac.npz  # file to be (over)written with output data
+output_file   = /PellaShared/kcu8rf/blacklight/output/example_table_opac_none.npz  # file to be (over)written with output data
 output_camera = false                          # flag for saving camera details
 
 # Checkpoint parameters
@@ -36,7 +36,7 @@ simulation_athenak_vars = false
 opacity_table = true
 opacity_file = /PellaShared/swd8g/tegan/tops_rossabs.txt
 
-mc_input = true
+mc_input = false
 mc_file = /PellaShared/kcu8rf/blacklight/data/sp_ring_opac/isoth.out3.00000.athdf
 mc_freq_file = /PellaShared/kcu8rf/blacklight/data/sp_ring_opac/sourceterm_frequencies.txt
 compton = false
