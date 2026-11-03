@@ -51,11 +51,11 @@ REDSHIFT=(
 )
 
 YMIN=(
-    1e35
+    1e38
 )
 
 YMAX=(
-    1e45
+    1e43
 )
 
 mkdir -p "$LOG_DIR" "$FALLBACK_OUTPUT_DIR"
